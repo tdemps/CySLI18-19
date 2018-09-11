@@ -38,3 +38,29 @@ void LogWrite(short reason){
   }
   dataFile.close();
 }
+
+void WriteData(){
+ File dataFile = SD.open("Data.txt", FILE_WRITE);
+// if(dataFile)
+//      Serial.println(F("file successfully opened"));
+ dataFile.print(time);
+ dataFile.print(",");
+ dataFile.print(altitude);
+ dataFile.print(",");
+ dataFile.print(altRefine);
+ dataFile.print(",");
+ dataFile.print(accX);  
+ dataFile.print(",");
+ dataFile.print(accY);
+ dataFile.print(",");
+ dataFile.print(accZ);
+ dataFile.print(",");
+ dataFile.print(getPos() - 35);
+ dataFile.print(",");
+ dataFile.print(accRefine);
+ dataFile.print(",");
+ dataFile.print(velocity);
+ dataFile.print(",");  
+ dataFile.println(projHeight);
+ dataFile.close();
+}
