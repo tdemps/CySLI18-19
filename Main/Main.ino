@@ -22,7 +22,7 @@
 #define g 32.174    // gravity, ft/s^2
 #define CDCLOSED 0.7  //The coefficient of drag when the air brakes are closed 
 #define AREACLOSED 0.25  //The frontal area of the rocket when the air brakes are closed, ft^2
-#define FINALHEIGHT 5280.0  //Apogee we want rocket to reach, in ft
+#define FINALHEIGHT 5000.0  //Apogee we want rocket to reach, in ft
 #define AIRDENSITY 0.0023 //Air density of launch field, lb/(g*ft^3)
 #define MASS 3   //Mass of the rocket, lb/g
 
@@ -74,37 +74,10 @@ void loop() { // run code (main code)
   WriteData();
 }
 
-void WriteData(){
- File dataFile = SD.open("Data.txt", FILE_WRITE);
-// if(dataFile)
-//      Serial.println(F("file successfully opened"));
- dataFile.print(time);
- dataFile.print(",");
- dataFile.print(altitude);
- dataFile.print(",");
- dataFile.print(altRefine);
- dataFile.print(",");
- dataFile.print(accX);  
- dataFile.print(",");
- dataFile.print(accY);
- dataFile.print(",");
- dataFile.print(accZ);
- dataFile.print(",");
- dataFile.print(getPos() - 35);
- dataFile.print(",");
- dataFile.print(accRefine);
- dataFile.print(",");
- dataFile.print(velocity);
- dataFile.print(",");  
- dataFile.println(projHeight);
- dataFile.close();
-}
-
 //Serial Setup
 void SerialSetup(){
  Serial.begin(9600);
 }
-
 
 //------------------------------------------------------------IMPORTANT FUNCTIONS-------------------------------------------------------
 double Kalman(double UnFV,double FR1,double *Pold){
@@ -151,13 +124,14 @@ double ApogeePrediction(double vel){
   double k = 0.5 * AREACLOSED * CDCLOSED * AIRDENSITY; //from old code, check constants
   
   projHeight = (MASS / (2.0 * k)) * log(((MASS * g) +(k * vel * vel)) / (MASS * g)) + altRefine;
-  
-  if (projHeight > (FINALHEIGHT + 15) ) //error of 30ft, pelican
+  =5280
+
+  if (projHeight > (FINALHEIGHT + 15) ) //error of 15ft, pelican
   {
     brake = true;
   }
   else
-  {
+  { 
     brake = false;
   }
   LogWrite(ServoFunction(brake));    //opens or closes brakes
@@ -220,7 +194,7 @@ void EndGame(){
         WriteData();
       }
     
-  } else if(altRefine > 5280){ // failsafe if rocket goes over 1 mile 
+  } else if(altRefine > FINALHEIGHT){ // failsafe if rocket goes over 1 mile 
     LogWrite(6);
     brake = true;
     while(getPos() < MAX_ANGLE){   // fully deploys brakes
@@ -255,6 +229,7 @@ void UpdateData(){
 
   altRefine = Kalman(altitude, altPrev, &PnextAlt);
   accRefine = Kalman(accY, AccPrev, &PnextAcc);
+  
   velocity += Integrate(OldTime, time, accRefine); //Integrating to get new velocity  
   
   //ServoTest();
@@ -289,14 +264,12 @@ void SerialTest(){
      call this function within UpdateData()*/
 
   Serial.print("rawAlt: "); Serial.print(altitude); Serial.print(" ,");
-   /*Serial.print("rawAlt: "); */Serial.print(altitude); Serial.print(" ,");
-  Serial.print("AltRefine: "); Serial.print(altRefine); Serial.print(" ,");
-  Serial.print("accY: "); Serial.print(accY); Serial.print(" , ");
-  Serial.print("AccRefine: "); Serial.print(accRefine); Serial.print(" ,");
+  //Serial.print("AltRefine: "); Serial.print(altRefine); Serial.print(" ,");
+  Serial.print("accY: "); Serial.print(accY); Serial.print(" , "); Serial.print(accX);
+  //Serial.print("AccRefine: "); Serial.print(accRefine); Serial.print(" ,");
   Serial.print("Velocity: "); Serial.print(velocity); Serial.print(" ,");
   
   Serial.println(""); // prints new line
   delay(500);         // optional delay of output
  
 }
-
