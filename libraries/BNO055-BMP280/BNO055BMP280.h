@@ -45,16 +45,7 @@
 //#include <Wire.h>   
 #include <i2c_t3.h>
 #include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_PCD8544.h>
 
-// Using NOKIA 5110 monochrome 84 x 48 pixel display
-// pin 7 - Serial clock out (SCLK)
-// pin 6 - Serial data out (DIN)
-// pin 5 - Data/Command select (D/C)
-// pin 3 - LCD chip select (SCE)
-// pin 4 - LCD reset (RST)
-Adafruit_PCD8544 display = Adafruit_PCD8544(7, 6, 5, 3, 4);
 
 // BMP280 registers
 #define BMP280_TEMP_XLSB  0xFC
@@ -429,7 +420,7 @@ float eInt[3] = {0.0f, 0.0f, 0.0f};       // vector to hold integral error for M
 uint16_t dig_T1, dig_P1;
 int16_t  dig_T2, dig_T3, dig_P2, dig_P3, dig_P4, dig_P5, dig_P6, dig_P7, dig_P8, dig_P9;
 
-void setup()
+/* void setup()
 {
 //  Wire.begin();
 //  TWBR = 12;  // 400 kbit/sec I2C speed for Pro Mini
@@ -443,25 +434,6 @@ void setup()
   pinMode(myLed, OUTPUT);
   digitalWrite(myLed, HIGH);
   
-  display.begin(); // Initialize the display
-  display.setContrast(58); // Set the contrast
-  
-// Start device display with ID of sensor
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setCursor(0,0); display.print("BNO055");
-  display.setTextSize(1);
-  display.setCursor(0, 20); display.print("9-DOF 16-bit");
-  display.setCursor(0, 30); display.print("motion sensor");
-  display.setCursor(20,40); display.print("60 ug LSB");
-  display.display();
-  delay(1000);
-
-// Set up for data display
-  display.setTextSize(1); // Set text size to normal, 2 is twice normal etc.
-  display.setTextColor(BLACK); // Set pixel color; 1 on the monochrome screen
-  display.clearDisplay();   // clears the screen and buffer
-
   I2Cscan(); // check for I2C devices on the bus8
   
   // Read the WHO_AM_I register, this is a good test of communication
@@ -470,49 +442,22 @@ void setup()
   Serial.print("BNO055 Address = 0x"); Serial.println(BNO055_ADDRESS, HEX);
   Serial.print("BNO055 WHO_AM_I = 0x"); Serial.println(BNO055_CHIP_ID, HEX);
   Serial.print("BNO055 "); Serial.print("I AM "); Serial.print(c, HEX); Serial.println(" I should be 0xA0");  
-  display.setCursor(20,0); display.print("BNO055");
-  display.setCursor(0,10); display.print("I AM");
-  display.setCursor(0,20); display.print(c, HEX);  
-  display.setCursor(0,30); display.print("I Should Be");
-  display.setCursor(0,40); display.print(0xA0, HEX); 
-  display.display();
   delay(1000); 
   
    
     // Read the WHO_AM_I register of the accelerometer, this is a good test of communication
   byte d = readByte(BNO055_ADDRESS, BNO055_ACC_ID);  // Read WHO_AM_I register for accelerometer
   Serial.print("BNO055 ACC "); Serial.print("I AM "); Serial.print(d, HEX); Serial.println(" I should be 0xFB");  
-  display.clearDisplay();
-  display.setCursor(20,0); display.print("BNO055 ACC");
-  display.setCursor(0,10); display.print("I AM");
-  display.setCursor(0,20); display.print(d, HEX);  
-  display.setCursor(0,30); display.print("I Should Be");
-  display.setCursor(0,40); display.print(0xFB, HEX);  
-  display.display();
   delay(1000); 
   
   // Read the WHO_AM_I register of the magnetometer, this is a good test of communication
   byte e = readByte(BNO055_ADDRESS, BNO055_MAG_ID);  // Read WHO_AM_I register for magnetometer
   Serial.print("BNO055 MAG "); Serial.print("I AM "); Serial.print(e, HEX); Serial.println(" I should be 0x32");
-  display.clearDisplay();
-  display.setCursor(20,0); display.print("BNO055 MAG");
-  display.setCursor(0,10); display.print("I AM");
-  display.setCursor(0,20); display.print(e, HEX);  
-  display.setCursor(0,30); display.print("I Should Be");
-  display.setCursor(0,40); display.print(0x32, HEX);  
-  display.display();
   delay(1000);   
   
   // Read the WHO_AM_I register of the gyroscope, this is a good test of communication
   byte f = readByte(BNO055_ADDRESS, BNO055_GYRO_ID);  // Read WHO_AM_I register for LIS3MDL
   Serial.print("BNO055 GYRO "); Serial.print("I AM "); Serial.print(f, HEX); Serial.println(" I should be 0x0F");
-  display.clearDisplay();
-  display.setCursor(20,0); display.print("BNO055 GYRO");
-  display.setCursor(0,10); display.print("I AM");
-  display.setCursor(0,20); display.print(f, HEX);  
-  display.setCursor(0,30); display.print("I Should Be");
-  display.setCursor(0,40); display.print(0x0F, HEX);  
-  display.display();
   delay(1000); 
 
   if (c == 0xA0) // BNO055 WHO_AM_I should always be 0xA0
@@ -553,174 +498,133 @@ void setup()
       Serial.println("MCU failed selftest"); 
     }
       
-    delay(1000);
+    delay(1000); */
   
-  // Read the WHO_AM_I register of the BMP280 this is a good test of communication
-  byte f = readByte(BMP280_ADDRESS, BMP280_ID);  // Read WHO_AM_I register for BMP280
-  Serial.print("BMP280 "); 
-  Serial.print("I AM "); 
-  Serial.print(f, HEX); 
-  Serial.print(" I should be "); 
-  Serial.println(0x58, HEX);
-  Serial.println(" ");
-  display.clearDisplay();
-  display.setCursor(20,0); 
-  display.print("BMP280");
-  display.setCursor(0,10); 
-  display.print("I AM");
-  display.setCursor(0,20); 
-  display.print(e, HEX);  
-  display.setCursor(0,30); 
-  display.print("I Should Be");
-  display.setCursor(0,40); 
-  display.print(0x58, HEX);  
-  display.display();
-  delay(1000); 
+  // // Read the WHO_AM_I register of the BMP280 this is a good test of communication
+  // byte f = readByte(BMP280_ADDRESS, BMP280_ID);  // Read WHO_AM_I register for BMP280
+  // Serial.print("BMP280 "); 
+  // Serial.print("I AM "); 
+  // Serial.print(f, HEX); 
+  // Serial.print(" I should be "); 
+  // Serial.println(0x58, HEX);
+  // Serial.println(" ");
+  // delay(1000); 
 
-  writeByte(BMP280_ADDRESS, BMP280_RESET, 0xB6); // reset BMP280 before initilization
-  delay(100);
+  // writeByte(BMP280_ADDRESS, BMP280_RESET, 0xB6); // reset BMP280 before initilization
+  // delay(100);
 
-  BMP280Init(); // Initialize BMP280 altimeter
-  Serial.println("Calibration coeficients:");
-  Serial.print("dig_T1 ="); 
-  Serial.println(dig_T1);
-  Serial.print("dig_T2 ="); 
-  Serial.println(dig_T2);
-  Serial.print("dig_T3 ="); 
-  Serial.println(dig_T3);
-  Serial.print("dig_P1 ="); 
-  Serial.println(dig_P1);
-  Serial.print("dig_P2 ="); 
-  Serial.println(dig_P2);
-  Serial.print("dig_P3 ="); 
-  Serial.println(dig_P3);
-  Serial.print("dig_P4 ="); 
-  Serial.println(dig_P4);
-  Serial.print("dig_P5 ="); 
-  Serial.println(dig_P5);
-  Serial.print("dig_P6 ="); 
-  Serial.println(dig_P6);
-  Serial.print("dig_P7 ="); 
-  Serial.println(dig_P7);
-  Serial.print("dig_P8 ="); 
-  Serial.println(dig_P8);
-  Serial.print("dig_P9 ="); 
-  Serial.println(dig_P9);
+  // BMP280Init(); // Initialize BMP280 altimeter
+  // Serial.println("Calibration coeficients:");
+  // Serial.print("dig_T1 ="); 
+  // Serial.println(dig_T1);
+  // Serial.print("dig_T2 ="); 
+  // Serial.println(dig_T2);
+  // Serial.print("dig_T3 ="); 
+  // Serial.println(dig_T3);
+  // Serial.print("dig_P1 ="); 
+  // Serial.println(dig_P1);
+  // Serial.print("dig_P2 ="); 
+  // Serial.println(dig_P2);
+  // Serial.print("dig_P3 ="); 
+  // Serial.println(dig_P3);
+  // Serial.print("dig_P4 ="); 
+  // Serial.println(dig_P4);
+  // Serial.print("dig_P5 ="); 
+  // Serial.println(dig_P5);
+  // Serial.print("dig_P6 ="); 
+  // Serial.println(dig_P6);
+  // Serial.print("dig_P7 ="); 
+  // Serial.println(dig_P7);
+  // Serial.print("dig_P8 ="); 
+  // Serial.println(dig_P8);
+  // Serial.print("dig_P9 ="); 
+  // Serial.println(dig_P9);
  
-  accelgyroCalBNO055(accelBias, gyroBias);
+  // accelgyroCalBNO055(accelBias, gyroBias);
   
-  Serial.println("Average accelerometer bias (mg) = "); Serial.println(accelBias[0]); Serial.println(accelBias[1]); Serial.println(accelBias[2]);
-  Serial.println("Average gyro bias (dps) = "); Serial.println(gyroBias[0]); Serial.println(gyroBias[1]); Serial.println(gyroBias[2]);
+  // Serial.println("Average accelerometer bias (mg) = "); Serial.println(accelBias[0]); Serial.println(accelBias[1]); Serial.println(accelBias[2]);
+  // Serial.println("Average gyro bias (dps) = "); Serial.println(gyroBias[0]); Serial.println(gyroBias[1]); Serial.println(gyroBias[2]);
+  
+  // delay(1000); 
+  
+  // magCalBNO055(magBias);
+  
+  // Serial.println("Average magnetometer bias (mG) = "); Serial.println(magBias[0]); Serial.println(magBias[1]); Serial.println(magBias[2]);
+  
+  // delay(1000); 
+  
+  // // Check calibration status of the sensors
+  // uint8_t calstat = readByte(BNO055_ADDRESS, BNO055_CALIB_STAT);
+  // Serial.println("Not calibrated = 0, fully calibrated = 3");
+  // Serial.print("System calibration status "); Serial.println( (0xC0 & calstat) >> 6);
+  // Serial.print("Gyro   calibration status "); Serial.println( (0x30 & calstat) >> 4);
+  // Serial.print("Accel  calibration status "); Serial.println( (0x0C & calstat) >> 2);
+  // Serial.print("Mag    calibration status "); Serial.println( (0x03 & calstat) >> 0);
+  
+  // initBNO055(); // Initialize the BNO055
+  // Serial.println("BNO055 initialized for sensor mode...."); // Initialize BNO055 for sensor read 
+ 
+  // }
+  // else
+  // {
+    // Serial.print("Could not connect to BNO055: 0x");
+    // Serial.println(c, HEX);
+    // while(1) ; // Loop forever if communication doesn't happen
+  // }
+// }
 
-  display.clearDisplay();
-     
-  display.setCursor(0, 0); display.print("BNO055 bias");
-  display.setCursor(0, 8); display.print(" x   y   z  ");
+// void loop()
+// {  
+    // readAccelData(accelCount);  // Read the x/y/z adc values
+    ////Now we'll calculate the accleration value into actual mg's
+    // ax = (float)accelCount[0]; // - accelBias[0];  // subtract off calculated accel bias
+    // ay = (float)accelCount[1]; // - accelBias[1];
+    // az = (float)accelCount[2]; // - accelBias[2]; 
 
-  display.setCursor(0,  16); display.print((int)(accelBias[0])); 
-  display.setCursor(24, 16); display.print((int)(accelBias[1])); 
-  display.setCursor(48, 16); display.print((int)(accelBias[2])); 
-  display.setCursor(72, 16); display.print("mg");
+    // readGyroData(gyroCount);  // Read the x/y/z adc values
+    ////Calculate the gyro value into actual degrees per second
+    // gx = (float)gyroCount[0]/16.; // - gyroBias[0];  // subtract off calculated gyro bias
+    // gy = (float)gyroCount[1]/16.; // - gyroBias[1];  
+    // gz = (float)gyroCount[2]/16.; // - gyroBias[2];   
+
+    // readMagData(magCount);  // Read the x/y/z adc values   
+    /////Calculate the magnetometer values in milliGauss
+    // mx = (float)magCount[0]/1.6; // - magBias[0];  // get actual magnetometer value in mGauss 
+    // my = (float)magCount[1]/1.6; // - magBias[1];  
+    // mz = (float)magCount[2]/1.6; // - magBias[2];   
     
-  display.setCursor(0,  24); display.print(gyroBias[0], 1); 
-  display.setCursor(24, 24); display.print(gyroBias[1], 1); 
-  display.setCursor(48, 24); display.print(gyroBias[2], 1); 
-  display.setCursor(72, 24); display.print("dps");   
- 
-  display.display();
-  
-  delay(1000); 
-  
-  magCalBNO055(magBias);
-  
-  Serial.println("Average magnetometer bias (mG) = "); Serial.println(magBias[0]); Serial.println(magBias[1]); Serial.println(magBias[2]);
-
-  display.clearDisplay();
-     
-  display.setCursor(0, 0); display.print("BNO055 bias");
-  display.setCursor(0, 8); display.print(" x   y   z  ");
-
-  display.setCursor(0,  16); display.print((int)(magBias[0])); 
-  display.setCursor(24, 16); display.print((int)(magBias[1])); 
-  display.setCursor(48, 16); display.print((int)(magBias[2])); 
-  display.setCursor(72, 16); display.print("mG");
- 
-  display.display();
-  
-  delay(1000); 
-  
-  // Check calibration status of the sensors
-  uint8_t calstat = readByte(BNO055_ADDRESS, BNO055_CALIB_STAT);
-  Serial.println("Not calibrated = 0, fully calibrated = 3");
-  Serial.print("System calibration status "); Serial.println( (0xC0 & calstat) >> 6);
-  Serial.print("Gyro   calibration status "); Serial.println( (0x30 & calstat) >> 4);
-  Serial.print("Accel  calibration status "); Serial.println( (0x0C & calstat) >> 2);
-  Serial.print("Mag    calibration status "); Serial.println( (0x03 & calstat) >> 0);
-  
-  initBNO055(); // Initialize the BNO055
-  Serial.println("BNO055 initialized for sensor mode...."); // Initialize BNO055 for sensor read 
- 
-  }
-  else
-  {
-    Serial.print("Could not connect to BNO055: 0x");
-    Serial.println(c, HEX);
-    while(1) ; // Loop forever if communication doesn't happen
-  }
-}
-
-void loop()
-{  
-    readAccelData(accelCount);  // Read the x/y/z adc values
-    // Now we'll calculate the accleration value into actual mg's
-    ax = (float)accelCount[0]; // - accelBias[0];  // subtract off calculated accel bias
-    ay = (float)accelCount[1]; // - accelBias[1];
-    az = (float)accelCount[2]; // - accelBias[2]; 
-
-    readGyroData(gyroCount);  // Read the x/y/z adc values
-    // Calculate the gyro value into actual degrees per second
-    gx = (float)gyroCount[0]/16.; // - gyroBias[0];  // subtract off calculated gyro bias
-    gy = (float)gyroCount[1]/16.; // - gyroBias[1];  
-    gz = (float)gyroCount[2]/16.; // - gyroBias[2];   
-
-    readMagData(magCount);  // Read the x/y/z adc values   
-    // Calculate the magnetometer values in milliGauss
-    mx = (float)magCount[0]/1.6; // - magBias[0];  // get actual magnetometer value in mGauss 
-    my = (float)magCount[1]/1.6; // - magBias[1];  
-    mz = (float)magCount[2]/1.6; // - magBias[2];   
+    // readQuatData(quatCount);  // Read the x/y/z adc values   
+   //// Calculate the quaternion values  
+    // quat[0] = (float)(quatCount[0])/16384.;    
+    // quat[1] = (float)(quatCount[1])/16384.;  
+    // quat[2] = (float)(quatCount[2])/16384.;   
+    // quat[3] = (float)(quatCount[3])/16384.;   
     
-    readQuatData(quatCount);  // Read the x/y/z adc values   
-    // Calculate the quaternion values  
-    quat[0] = (float)(quatCount[0])/16384.;    
-    quat[1] = (float)(quatCount[1])/16384.;  
-    quat[2] = (float)(quatCount[2])/16384.;   
-    quat[3] = (float)(quatCount[3])/16384.;   
-    
-    readEulData(EulCount);  // Read the x/y/z adc values   
-    // Calculate the Euler angles values in degrees
-    Yaw = (float)EulCount[0]/16.;  
-    Roll = (float)EulCount[1]/16.;  
-    Pitch = (float)EulCount[2]/16.;   
+    // readEulData(EulCount);  // Read the x/y/z adc values   
+   //// Calculate the Euler angles values in degrees
+    // Yaw = (float)EulCount[0]/16.;  
+    // Roll = (float)EulCount[1]/16.;  
+    // Pitch = (float)EulCount[2]/16.;   
  
-    readLIAData(LIACount);  // Read the x/y/z adc values   
-    // Calculate the linear acceleration (sans gravity) values in mg
-    LIAx = (float)LIACount[0];  
-    LIAy = (float)LIACount[1];  
-    LIAz = (float)LIACount[2];   
+    // readLIAData(LIACount);  // Read the x/y/z adc values   
+   //// Calculate the linear acceleration (sans gravity) values in mg
+    // LIAx = (float)LIACount[0];  
+    // LIAy = (float)LIACount[1];  
+    // LIAz = (float)LIACount[2];   
 
-    readGRVData(GRVCount);  // Read the x/y/z adc values   
-    // Calculate the linear acceleration (sans gravity) values in mg
-    GRVx = (float)GRVCount[0];  
-    GRVy = (float)GRVCount[1];  
-    GRVz = (float)GRVCount[2];   
+    // readGRVData(GRVCount);  // Read the x/y/z adc values   
+   //// Calculate the linear acceleration (sans gravity) values in mg
+    // GRVx = (float)GRVCount[0];  
+    // GRVy = (float)GRVCount[1];  
+    // GRVz = (float)GRVCount[2];   
     
   
-  Now = micros();
-  deltat = ((Now - lastUpdate)/1000000.0f); // set integration time by time elapsed since last filter update
-  lastUpdate = Now;
+  // Now = micros();
+  // deltat = ((Now - lastUpdate)/1000000.0f); // set integration time by time elapsed since last filter update
+  // lastUpdate = Now;
   
-  sum += deltat; // sum for averaging filter update rate
-  sumCount++;
+  // sum += deltat; // sum for averaging filter update rate
+  // sumCount++;
   
   // Sensors x, y, and z-axes  for the three sensor: accel, gyro, and magnetometer are all aligned, so
   // no allowance for any orientation mismatch in feeding the output to the quaternion filter is required.
@@ -728,82 +632,82 @@ void loop()
   // in the LSM9DS0 and MPU9250 sensors. This rotation can be modified to allow any convenient orientation convention.
   // This is ok by aircraft orientation standards!  
   // Pass gyro rate as rad/s
-  MadgwickQuaternionUpdate(ax, ay, az, gx*PI/180.0f, gy*PI/180.0f, gz*PI/180.0f,  mx,  my,  mz);
-//  MahonyQuaternionUpdate(ax, ay, az, gx*PI/180.0f, gy*PI/180.0f, gz*PI/180.0f, mx, my, mz);
+  // MadgwickQuaternionUpdate(ax, ay, az, gx*PI/180.0f, gy*PI/180.0f, gz*PI/180.0f,  mx,  my,  mz);
+ ////MahonyQuaternionUpdate(ax, ay, az, gx*PI/180.0f, gy*PI/180.0f, gz*PI/180.0f, mx, my, mz);
     
-    // Serial print and/or display at 0.5 s rate independent of data rates
-    delt_t = millis() - count;
-    if (delt_t > 500) { // update LCD once per half-second independent of read rate
+   //// Serial print and/or display at 0.5 s rate independent of data rates
+    // delt_t = millis() - count;
+    // if (delt_t > 500) { // update LCD once per half-second independent of read rate
     
-       // check BNO-055 error status at 2 Hz rate
-    uint8_t sysstat = readByte(BNO055_ADDRESS, BNO055_SYS_STATUS); // check system status
-    Serial.print("System Status = 0x"); Serial.println(sysstat, HEX);
-    if(sysstat == 0x05) Serial.println("Sensor fusion algorithm running");
-    if(sysstat == 0x06) Serial.println("Sensor fusion not algorithm running");
+   ////    check BNO-055 error status at 2 Hz rate
+    // uint8_t sysstat = readByte(BNO055_ADDRESS, BNO055_SYS_STATUS); // check system status
+    // Serial.print("System Status = 0x"); Serial.println(sysstat, HEX);
+    // if(sysstat == 0x05) Serial.println("Sensor fusion algorithm running");
+    // if(sysstat == 0x06) Serial.println("Sensor fusion not algorithm running");
     
-    if(sysstat == 0x01) {
-       uint8_t syserr = readByte(BNO055_ADDRESS, BNO055_SYS_ERR);
-      if(syserr == 0x01) Serial.println("Peripheral initialization error");
-      if(syserr == 0x02) Serial.println("System initialization error");
-      if(syserr == 0x03) Serial.println("Self test result failed");
-      if(syserr == 0x04) Serial.println("Register map value out of range");
-      if(syserr == 0x05) Serial.println("Register map address out of range");
-      if(syserr == 0x06) Serial.println("Register map write error");
-      if(syserr == 0x07) Serial.println("BNO low power mode no available for selected operation mode");
-      if(syserr == 0x08) Serial.println("Accelerometer power mode not available");
-      if(syserr == 0x09) Serial.println("Fusion algorithm configuration error");
-      if(syserr == 0x0A) Serial.println("Sensor configuration error");    
-    }  
+    // if(sysstat == 0x01) {
+       // uint8_t syserr = readByte(BNO055_ADDRESS, BNO055_SYS_ERR);
+      // if(syserr == 0x01) Serial.println("Peripheral initialization error");
+      // if(syserr == 0x02) Serial.println("System initialization error");
+      // if(syserr == 0x03) Serial.println("Self test result failed");
+      // if(syserr == 0x04) Serial.println("Register map value out of range");
+      // if(syserr == 0x05) Serial.println("Register map address out of range");
+      // if(syserr == 0x06) Serial.println("Register map write error");
+      // if(syserr == 0x07) Serial.println("BNO low power mode no available for selected operation mode");
+      // if(syserr == 0x08) Serial.println("Accelerometer power mode not available");
+      // if(syserr == 0x09) Serial.println("Fusion algorithm configuration error");
+      // if(syserr == 0x0A) Serial.println("Sensor configuration error");    
+    // }  
 
-    if(SerialDebug) {
-    Serial.print("ax = "); Serial.print((int)ax);  
-    Serial.print(" ay = "); Serial.print((int)ay); 
-    Serial.print(" az = "); Serial.print((int)az); Serial.println(" mg");
-    Serial.print("gx = "); Serial.print( gx, 2); 
-    Serial.print(" gy = "); Serial.print( gy, 2); 
-    Serial.print(" gz = "); Serial.print( gz, 2); Serial.println(" deg/s");
-    Serial.print("mx = "); Serial.print( (int)mx ); 
-    Serial.print(" my = "); Serial.print( (int)my ); 
-    Serial.print(" mz = "); Serial.print( (int)mz ); Serial.println(" mG");
+    // if(SerialDebug) {
+    // Serial.print("ax = "); Serial.print((int)ax);  
+    // Serial.print(" ay = "); Serial.print((int)ay); 
+    // Serial.print(" az = "); Serial.print((int)az); Serial.println(" mg");
+    // Serial.print("gx = "); Serial.print( gx, 2); 
+    // Serial.print(" gy = "); Serial.print( gy, 2); 
+    // Serial.print(" gz = "); Serial.print( gz, 2); Serial.println(" deg/s");
+    // Serial.print("mx = "); Serial.print( (int)mx ); 
+    // Serial.print(" my = "); Serial.print( (int)my ); 
+    // Serial.print(" mz = "); Serial.print( (int)mz ); Serial.println(" mG");
     
-    Serial.print("qx = "); Serial.print(q[0]);
-    Serial.print(" qy = "); Serial.print(q[1]); 
-    Serial.print(" qz = "); Serial.print(q[2]); 
-    Serial.print(" qw = "); Serial.println(q[3]); 
-    Serial.print("quatw = "); Serial.print(quat[0]);
-    Serial.print(" quatx = "); Serial.print(quat[1]); 
-    Serial.print(" quaty = "); Serial.print(quat[2]); 
-    Serial.print(" quatz = "); Serial.println(quat[3]); 
-    } 
+    // Serial.print("qx = "); Serial.print(q[0]);
+    // Serial.print(" qy = "); Serial.print(q[1]); 
+    // Serial.print(" qz = "); Serial.print(q[2]); 
+    // Serial.print(" qw = "); Serial.println(q[3]); 
+    // Serial.print("quatw = "); Serial.print(quat[0]);
+    // Serial.print(" quatx = "); Serial.print(quat[1]); 
+    // Serial.print(" quaty = "); Serial.print(quat[2]); 
+    // Serial.print(" quatz = "); Serial.println(quat[3]); 
+    // } 
     
-    tempGCount = readGyroTempData();  // Read the gyro adc values
-    Gtemperature = (float) tempGCount; // Gyro chip temperature in degrees Centigrade
-   // Print gyro die temperature in degrees Centigrade      
-    Serial.print("Gyro temperature is ");  Serial.print(Gtemperature, 1);  Serial.println(" degrees C"); // Print T values to tenths of a degree C
+    // tempGCount = readGyroTempData();  // Read the gyro adc values
+    // Gtemperature = (float) tempGCount; // Gyro chip temperature in degrees Centigrade
+  //// Print gyro die temperature in degrees Centigrade      
+    // Serial.print("Gyro temperature is ");  Serial.print(Gtemperature, 1);  Serial.println(" degrees C"); // Print T values to tenths of a degree C
  
-    rawPress =  readBMP280Pressure();
-    Pressure = (float) bmp280_compensate_P(rawPress)/25600.; // Pressure in mbar
-    rawTemp =   readBMP280Temperature();
-    Temperature = (float) bmp280_compensate_T(rawTemp)/100.;
+    // rawPress =  readBMP280Pressure();
+    // Pressure = (float) bmp280_compensate_P(rawPress)/25600.; // Pressure in mbar
+    // rawTemp =   readBMP280Temperature();
+    // Temperature = (float) bmp280_compensate_T(rawTemp)/100.;
 
-    float altitude = 145366.45f*(1.0f - pow((Pressure/1013.25f), 0.190284f));
+    // float altitude = 145366.45f*(1.0f - pow((Pressure/1013.25f), 0.190284f));
 
-    if(SerialDebug) {
-      Serial.println("BMP280:");
-      Serial.print("Altimeter temperature = "); 
-      Serial.print( Temperature, 2); 
-      Serial.println(" C"); // temperature in degrees Celsius
-      Serial.print("Altimeter temperature = "); 
-      Serial.print(9.*Temperature/5. + 32., 2); 
-      Serial.println(" F"); // temperature in degrees Fahrenheit
-      Serial.print("Altimeter pressure = "); 
-      Serial.print(Pressure, 2);  
-      Serial.println(" mbar");// pressure in millibar
-      Serial.print("Altitude = "); 
-      Serial.print(altitude, 2); 
-      Serial.println(" feet");
-      Serial.println(" ");
-    }
+    // if(SerialDebug) {
+      // Serial.println("BMP280:");
+      // Serial.print("Altimeter temperature = "); 
+      // Serial.print( Temperature, 2); 
+      // Serial.println(" C"); // temperature in degrees Celsius
+      // Serial.print("Altimeter temperature = "); 
+      // Serial.print(9.*Temperature/5. + 32., 2); 
+      // Serial.println(" F"); // temperature in degrees Fahrenheit
+      // Serial.print("Altimeter pressure = "); 
+      // Serial.print(Pressure, 2);  
+      // Serial.println(" mbar");// pressure in millibar
+      // Serial.print("Altitude = "); 
+      // Serial.print(altitude, 2); 
+      // Serial.println(" feet");
+      // Serial.println(" ");
+    // }
     
   // Define output variables from updated quaternion---these are Tait-Bryan angles, commonly used in aircraft orientation.
   // In this coordinate system, the positive z-axis is down toward Earth. 
@@ -814,70 +718,70 @@ void loop()
   // Tait-Bryan angles as well as Euler angles are non-commutative; that is, the get the correct orientation the rotations must be
   // applied in the correct order which for this configuration is yaw, pitch, and then roll.
   // For more see http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles which has additional links.
-    yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[2] * q[2] - q[3] * q[3]);   
-    pitch = -asin(2.0f * (q[1] * q[3] - q[0] * q[2]));
-    roll  = atan2(2.0f * (q[0] * q[1] + q[2] * q[3]), q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3]);
-    pitch *= 180.0f / PI;
-    yaw   *= 180.0f / PI; 
- //   yaw   -= 13.8f; // Declination at Danville, California is 13 degrees 48 minutes and 47 seconds on 2014-04-04
-    roll  *= 180.0f / PI;
+    // yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[2] * q[2] - q[3] * q[3]);   
+    // pitch = -asin(2.0f * (q[1] * q[3] - q[0] * q[2]));
+    // roll  = atan2(2.0f * (q[0] * q[1] + q[2] * q[3]), q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3]);
+    // pitch *= 180.0f / PI;
+    // yaw   *= 180.0f / PI; 
+   ////////////yaw   -= 13.8f; // Declination at Danville, California is 13 degrees 48 minutes and 47 seconds on 2014-04-04
+    // roll  *= 180.0f / PI;
      
-    if(SerialDebug) {
-    Serial.print("Software Yaw, Pitch, Roll: ");
-    Serial.print(yaw, 2);
-    Serial.print(", ");
-    Serial.print(pitch, 2);
-    Serial.print(", ");
-    Serial.println(roll, 2);
+    // if(SerialDebug) {
+    // Serial.print("Software Yaw, Pitch, Roll: ");
+    // Serial.print(yaw, 2);
+    // Serial.print(", ");
+    // Serial.print(pitch, 2);
+    // Serial.print(", ");
+    // Serial.println(roll, 2);
     
-    Serial.print("Hardware Yaw, Pitch, Roll: ");
-    Serial.print(Yaw, 2);
-    Serial.print(", ");
-    Serial.print(Pitch, 2);
-    Serial.print(", ");
-    Serial.println(Roll, 2);
+    // Serial.print("Hardware Yaw, Pitch, Roll: ");
+    // Serial.print(Yaw, 2);
+    // Serial.print(", ");
+    // Serial.print(Pitch, 2);
+    // Serial.print(", ");
+    // Serial.println(Roll, 2);
  
-    Serial.print("Hardware x, y, z linear acceleration: ");
-    Serial.print(LIAx, 2);
-    Serial.print(", ");
-    Serial.print(LIAy, 2);
-    Serial.print(", ");
-    Serial.println(LIAz, 2);
+    // Serial.print("Hardware x, y, z linear acceleration: ");
+    // Serial.print(LIAx, 2);
+    // Serial.print(", ");
+    // Serial.print(LIAy, 2);
+    // Serial.print(", ");
+    // Serial.println(LIAz, 2);
 
-    Serial.print("Hardware x, y, z gravity vector: ");
-    Serial.print(GRVx, 2);
-    Serial.print(", ");
-    Serial.print(GRVy, 2);
-    Serial.print(", ");
-    Serial.println(GRVz, 2);
+    // Serial.print("Hardware x, y, z gravity vector: ");
+    // Serial.print(GRVx, 2);
+    // Serial.print(", ");
+    // Serial.print(GRVy, 2);
+    // Serial.print(", ");
+    // Serial.println(GRVz, 2);
  
     
-    Serial.print("rate = "); Serial.print((float)sumCount/sum, 2); Serial.println(" Hz");
-    }
+    // Serial.print("rate = "); Serial.print((float)sumCount/sum, 2); Serial.println(" Hz");
+    // }
    
- /*  display.clearDisplay();    
+ // /*  display.clearDisplay();    
  
-    display.setCursor(0, 0); display.print(" x   y   z ");
+    // display.setCursor(0, 0); display.print(" x   y   z ");
 
-    display.setCursor(0,  8); display.print((int)(1000*ax)); 
-    display.setCursor(24, 8); display.print((int)(1000*ay)); 
-    display.setCursor(48, 8); display.print((int)(1000*az)); 
-    display.setCursor(72, 8); display.print("mg");
+    // display.setCursor(0,  8); display.print((int)(1000*ax)); 
+    // display.setCursor(24, 8); display.print((int)(1000*ay)); 
+    // display.setCursor(48, 8); display.print((int)(1000*az)); 
+    // display.setCursor(72, 8); display.print("mg");
     
-    display.setCursor(0,  16); display.print((int)(gx)); 
-    display.setCursor(24, 16); display.print((int)(gy)); 
-    display.setCursor(48, 16); display.print((int)(gz)); 
-    display.setCursor(66, 16); display.print("o/s");    
+    // display.setCursor(0,  16); display.print((int)(gx)); 
+    // display.setCursor(24, 16); display.print((int)(gy)); 
+    // display.setCursor(48, 16); display.print((int)(gz)); 
+    // display.setCursor(66, 16); display.print("o/s");    
 
-    display.setCursor(0,  24); display.print((int)(mx)); 
-    display.setCursor(24, 24); display.print((int)(my)); 
-    display.setCursor(48, 24); display.print((int)(mz)); 
-    display.setCursor(72, 24); display.print("mG");    
+    // display.setCursor(0,  24); display.print((int)(mx)); 
+    // display.setCursor(24, 24); display.print((int)(my)); 
+    // display.setCursor(48, 24); display.print((int)(mz)); 
+    // display.setCursor(72, 24); display.print("mG");    
  
-    display.setCursor(0,  32); display.print((int)(yaw)); 
-    display.setCursor(24, 32); display.print((int)(pitch)); 
-    display.setCursor(48, 32); display.print((int)(roll)); 
-    display.setCursor(66, 32); display.print("ypr");  
+    // display.setCursor(0,  32); display.print((int)(yaw)); 
+    // display.setCursor(24, 32); display.print((int)(pitch)); 
+    // display.setCursor(48, 32); display.print((int)(roll)); 
+    // display.setCursor(66, 32); display.print("ypr");  
   
     // With these settings the filter is updating at a ~145 Hz rate using the Madgwick scheme and 
     // >200 Hz using the Mahony scheme even though the display refreshes at only 2 Hz.
@@ -891,18 +795,18 @@ void loop()
     // produced by the on-board Digital Motion Processor of Invensense's MPU6050 6 DoF and MPU9150 9DoF sensors.
     // The 3.3 V 8 MHz Pro Mini is doing pretty well!
     
-    display.setCursor(0, 40); display.print(altitude, 0); display.print("ft"); 
-    display.setCursor(68, 0); display.print(9.*Temperature/5. + 32., 0); 
-    display.setCursor(42, 40); display.print((float) sumCount / (1000.*sum), 2); display.print("kHz"); 
-    display.display();
-*/
-    digitalWrite(myLed, !digitalRead(myLed));
-    count = millis(); 
-    sumCount = 0;
-    sum = 0;    
-    }
+    // display.setCursor(0, 40); display.print(altitude, 0); display.print("ft"); 
+    // display.setCursor(68, 0); display.print(9.*Temperature/5. + 32., 0); 
+    // display.setCursor(42, 40); display.print((float) sumCount / (1000.*sum), 2); display.print("kHz"); 
+    // display.display();
+// */
+    // digitalWrite(myLed, !digitalRead(myLed));
+    // count = millis(); 
+    // sumCount = 0;
+    // sum = 0;    
+    // }
 
-}
+// }
 
 //===================================================================================================================
 //====== Set of useful function to access acceleration. gyroscope, magnetometer, and temperature data
