@@ -61,25 +61,62 @@ void MpuSetup(){
     mpu.setFullScaleAccelRange(3);  //0=2g, 1=4g, 2=8g, 3=16g 
     mpu.setFullScaleGyroRange(2); //0=250 deg/s, 1=500 deg/s, 2=1000 deg/s, 3=2000 deg/s 
 }
+void BnoBmpSetup(){
+	
+	Wire.begin(I2C_MASTER, 0x00, I2C_PINS_16_17, I2C_PULLUP_EXT, I2C_RATE_400);
+	delay(4000);
+	Serial.begin(38400);
+  
+	// Set up the interrupt pin, its set as active high, push-pull
+	pinMode(intPin, INPUT);
+	pinMode(myLed, OUTPUT);
+	digitalWrite(myLed, HIGH);
+ 
+	//DebugSetup();
+  
+	writeByte(BMP280_ADDRESS, BMP280_RESET, 0xB6); // reset BMP280 before initilization
+	delay(100);
+  
+	BMP280Init(); // Initialize BMP280 altimeter
+    accelgyroCalBNO055(accelBias, gyroBias);
+	delay(1000); 
+  
+	magCalBNO055(magBias);
+	delay(1000); 
+
+	initBNO055(); // Initialize the BNO055
+
+}
 
 void GetAcc(int16_t *accX, int16_t *accY, int16_t *accZ){
-   mpu.getAcceleration(accX, accY, accZ);
-   *accX = map(*accX, 0, 2048, 0, 32);
-   *accY = map(*accY, 0, 2048, 0, 32)-32; //if y is pointing up (or usb port) subtract 31
-   *accZ = map(*accZ, 0, 2048, 0, 32); //pelican
- 
-   /* Each 16-bit accelerometer measurement has a full scale defined in ACCEL_FS
- * (Register 28). For each full scale setting, the accelerometers' sensitivity
- * per LSB in ACCEL_xOUT is shown in the table below:
- *
- * <pre>
- * AFS_SEL | Full Scale Range | LSB Sensitivity
- * --------+------------------+----------------
- * 0       | +/- 2g           | 8192 LSB/mg
- * 1       | +/- 4g           | 4096 LSB/mg
- * 2       | +/- 8g           | 2048 LSB/mg
- * 3       | +/- 16g          | 1024 LSB/mg */
+	
+	readAccelData(int16_t *accX, int16_t *accY, int16_t *accZ);
+	
+    // Now we'll calculate the accleration value into actual mg's
+    accX = (float)accX // - accelBias[0];  // subtract off calculated accel bias
+    accY = (float)accY; // - accelBias[1];
+    accZ = (float)accZ; // - accelBias[2]; 
+	
 }
+
+// void GetAcc(int16_t *accX, int16_t *accY, int16_t *accZ){
+   // mpu.getAcceleration(accX, accY, accZ);
+   // *accX = map(*accX, 0, 2048, 0, 32);
+   // *accY = map(*accY, 0, 2048, 0, 32)-32; //if y is pointing up (or usb port) subtract 31
+   // *accZ = map(*accZ, 0, 2048, 0, 32); //pelican
+ 
+   // /* Each 16-bit accelerometer measurement has a full scale defined in ACCEL_FS
+ // * (Register 28). For each full scale setting, the accelerometers' sensitivity
+ // * per LSB in ACCEL_xOUT is shown in the table below:
+ // *
+ // * <pre>
+ // * AFS_SEL | Full Scale Range | LSB Sensitivity
+ // * --------+------------------+----------------
+ // * 0       | +/- 2g           | 8192 LSB/mg
+ // * 1       | +/- 4g           | 4096 LSB/mg
+ // * 2       | +/- 8g           | 2048 LSB/mg
+ // * 3       | +/- 16g          | 1024 LSB/mg */
+// }
 
 
 //-------------------------------------------ALTIMETER-FUNCTIONS--------------------------------//
@@ -89,9 +126,9 @@ void ms5611Setup(){
   baseline = ms5611.readPressure();
 }
 
-double GetPressure(){
-  return ms5611.readPressure();
-}
+// double GetPressure(){
+  // return ms5611.readPressure();
+// }
 
 void Resetms5611(){
 	
