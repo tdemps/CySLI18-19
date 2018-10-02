@@ -17,14 +17,12 @@
 
 //ex. include <BMP280.h>
 
-#include <I2Cdev.h>   // provides simple and intuitive interfaces to I2C devices
-#include <MPU6050.h>  // IMU library
-#include <Wire.h>   // allows you to communicate with I2C / TWI devices
+#include <i2c_t3.h>   // provides simple and intuitive interfaces to I2C devices
+//#include <Wire.h>   // allows you to communicate with I2C / TWI devices
 #include <Servo.h>    // servo library
 #include <SPI.h>    // Serial Peripheral Interface(SPI) used for communicating with one or more peripheral devices quickly over short distances
 #include <limits.h>
-#include <BNOBMP.h>
-#include <MS5611.h>
+#include <BNOBMPLib.h>
 
 //set output pins for various sensors below
 #define SERVO_PIN 47	//servo signal output pin.
@@ -33,8 +31,6 @@
 #define SD_PIN 53		//data pin for SD Card
 
 //C++ objects representing devices attached to Teensy/Arduinos.
-MS5611 ms5611;      //IMU1
-MPU6050 mpu;        //IMU2
 Servo servo;        // airbrake servo
 double baseline = 0.0;         // baseline pressure, taken during IMU setup
 
@@ -51,52 +47,20 @@ int testingLib(){
 }
 
 //-----------------------------------------ACCELEROMETER-FUNCTIONS--------------------------------
-void MpuSetup(){
-    //joins I2C bus (I2Cdev library doesn't do this automatically) (Was found in available rocket code on internet) 
-    #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-        Wire.begin();
-    #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
-        Fastwire::setup(400, true);
-    #endif
-    mpu.initialize();
-    mpu.setFullScaleAccelRange(3);  //0=2g, 1=4g, 2=8g, 3=16g 
-    mpu.setFullScaleGyroRange(2); //0=250 deg/s, 1=500 deg/s, 2=1000 deg/s, 3=2000 deg/s 
-}
-void BnoBmpSetup(){
-	
-	Wire.begin(I2C_MASTER, 0x00, I2C_PINS_16_17, I2C_PULLUP_EXT, I2C_RATE_400);
-	delay(4000);
-	Serial.begin(38400);
-  
-	// Set up the interrupt pin, its set as active high, push-pull
-	pinMode(intPin, INPUT);
-	pinMode(myLed, OUTPUT);
-	digitalWrite(myLed, HIGH);
- 
-	//DebugSetup();
-  
-	writeByte(BMP280_ADDRESS, BMP280_RESET, 0xB6); // reset BMP280 before initilization
-	delay(100);
-  
-	BMP280Init(); // Initialize BMP280 altimeter
-    accelgyroCalBNO055(accelBias, gyroBias);
-	delay(1000); 
-  
-	magCalBNO055(magBias);
-	delay(1000); 
 
-	initBNO055(); // Initialize the BNO055
+void BnoBmpSetup(){
+	DebugSetup();
 
 }
 
 void GetAcc(int16_t *accX, int16_t *accY, int16_t *accZ){
 	
-	readAccelData(int16_t *accX, int16_t *accY, int16_t *accZ);
+	readAccelData(accX,accY,accZ);
 	
     // Now we'll calculate the accleration value into actual mg's
-    accX = (float)accX // - accelBias[0];  // subtract off calculated accel bias
-    accY = (float)accY; // - accelBias[1];
-    accZ = (float)accZ; // - accelBias[2]; 
+    accX = accX; // - accelBias[0];  // subtract off calculated accel bias
+    accY = accY; // - accelBias[1];
+    accZ = accZ; // - accelBias[2]; 
 	
 }
 
@@ -122,20 +86,7 @@ void GetAcc(int16_t *accX, int16_t *accY, int16_t *accZ){
 
 //-------------------------------------------ALTIMETER-FUNCTIONS--------------------------------//
 
-void ms5611Setup(){
-  ms5611.begin();
-  baseline = ms5611.readPressure();
-}
 
-// double GetPressure(){
-  // return ms5611.readPressure();
-// }
-
-void Resetms5611(){
-	
-  baseline = ms5611.readPressure();
-  
-}
 
 double GetAlt(){
 
@@ -143,15 +94,17 @@ double GetAlt(){
   
 double a,P;
   
-  // Get a new pressure reading:
-  P = ms5611.readPressure();
+  // // Get a new pressure reading:
+  // P = ms5611.readPressure();
 
-  // Show the relative altitude difference between
-  // the new reading and the baseline reading:
-  a = ms5611.getAltitude(P,baseline);
+  // // Show the relative altitude difference between
+  // // the new reading and the baseline reading:
+  // a = ms5611.getAltitude(P,baseline);
   
-  //convert to ft and return
-  return a*3.28084; 
+  // //convert to ft and return
+  // return a*3.28084;
+  
+  return BMPAltitude(); //should be in feet
   }
 
 

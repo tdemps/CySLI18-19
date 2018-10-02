@@ -53,8 +53,9 @@ int16_t accX, accY, accZ;   // raw accelerations, ft/s^2
 
 void setup(){
   SerialSetup();
-  MpuSetup();     
-  ms5611Setup();
+  //MpuSetup();     
+  //ms5611Setup();
+  BnoBmpSetup();
   ServoSetup();
   SDcardSetup();
   SDcardWriteSetup();    
@@ -134,6 +135,7 @@ double ApogeePrediction(double vel){
     brake = false;
   }
   LogWrite(ServoFunction(brake));    //opens or closes brakes
+  return projHeight;
 }
 
 double Integrate(unsigned long prevTime, unsigned long currTime, double val) {
