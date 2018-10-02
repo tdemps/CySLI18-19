@@ -26,6 +26,7 @@
 #include <SysCall.h>
 
 #include <sensors.h>
+#include <SdFat.h>
 
 // CSV FILES MUST BE FORMATTED: TIME,ALTITUDE,AX,AY,AZ
 
@@ -62,7 +63,7 @@ unsigned long OldTime=0;  // time from previous loop, ms
 
 File csv;
 char delim = ',';
-
+SdFat SD;
 
 //MPU 6050 Accelerations
 int16_t accX, accY, accZ;   // unfiltered accelerations, ft/s^2
@@ -497,4 +498,3 @@ void csvSetup() {
     Serial.println(accZ);
   }
 }
-

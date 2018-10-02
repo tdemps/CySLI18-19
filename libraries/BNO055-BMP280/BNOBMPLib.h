@@ -1,3 +1,10 @@
+
+
+#ifndef BNOBMP_h	//DONT TOUCH
+#define BNOBMP_h	//ALSO DONT TOUCH
+
+
+
 /* BNO055_BMP280_t3 Basic Example Code
  by: Kris Winer
  date: April 25, 2015

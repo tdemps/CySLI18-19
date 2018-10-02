@@ -23,6 +23,7 @@
 #include <Servo.h>    // servo library
 #include <SPI.h>    // Serial Peripheral Interface(SPI) used for communicating with one or more peripheral devices quickly over short distances
 #include <limits.h>
+#include <BNOBMP.h>
 #include <MS5611.h>
 
 //set output pins for various sensors below

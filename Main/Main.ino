@@ -124,7 +124,6 @@ double ApogeePrediction(double vel){
   double k = 0.5 * AREACLOSED * CDCLOSED * AIRDENSITY; //from old code, check constants
   
   projHeight = (MASS / (2.0 * k)) * log(((MASS * g) +(k * vel * vel)) / (MASS * g)) + altRefine;
-  =5280
 
   if (projHeight > (FINALHEIGHT + 15) ) //error of 15ft, pelican
   {
