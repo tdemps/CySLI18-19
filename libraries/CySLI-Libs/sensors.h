@@ -28,7 +28,7 @@
 #define SERVO_PIN 47	//servo signal output pin.
 #define INIT_ANGLE 35	//servo's inital angle, or the "closed" angle for the brakes
 #define MAX_ANGLE 125	//maximum angle that brakes can be deployed
-#define SD_PIN 53		//data pin for SD Card
+#define SD_PIN BUILTIN_SDCARD		//data pin for SD Card
 
 //C++ objects representing devices attached to Teensy/Arduinos.
 Servo servo;        // airbrake servo

@@ -3,7 +3,11 @@ void SDcardSetup(){
   /*Set up sd card to read RC data*/
   
   pinMode(SD_PIN, OUTPUT);
-    SD.begin(SD_PIN);  
+  if(!SD.begin(SD_PIN)){
+    Serial.println("Card init failed, is the card inserted?");
+    return;
+  }
+  Serial.println("SD Card initialized");  
 }
 
 void SDcardWriteSetup(){
