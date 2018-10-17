@@ -211,7 +211,7 @@ uint8_t Gscale = GFS_250DPS;  // Gyro full scale
 //uint8_t Godr = GODR_250Hz;    // Gyro sample rate
 uint8_t Gbw = GBW_23Hz;       // Gyro bandwidth
 //
-uint8_t Ascale = AFS_2G;      // Accel full scale
+uint8_t Ascale = AFS_18G;      // Accel full scale
 //uint8_t Aodr = AODR_250Hz;    // Accel sample rate
 uint8_t APwrMode = NormalA;    // Accel power mode
 uint8_t Abw = ABW_31_25Hz;    // Accel bandwidth, accel sample rate divided by ABW_divx
@@ -1011,7 +1011,7 @@ double BMPAltitude(){
 	 rawPress =  readBMP280Pressure();
     Pressure = (float) bmp280_compensate_P(rawPress)/25600.; // Pressure in mbar
     rawTemp =   readBMP280Temperature();
-    Temperature = (float) bmp280_compensate_T(rawTemp)/100.;
+  //  Temperature = (float) bmp280_compensate_T(rawTemp)/100.;
 
     return (double) 145366.45f*(1.0f - pow((Pressure/1013.25f), 0.190284f));
 }
