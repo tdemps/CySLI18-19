@@ -43,6 +43,140 @@
 #include <SPI.h>
 #include<BNOBMPLib.h>
 
+// BMP280 registers
+#define BMP280_TEMP_XLSB  0xFC
+#define BMP280_TEMP_LSB   0xFB
+#define BMP280_TEMP_MSB   0xFA
+#define BMP280_PRESS_XLSB 0xF9
+#define BMP280_PRESS_LSB  0xF8
+#define BMP280_PRESS_MSB  0xF7
+#define BMP280_CONFIG     0xF5
+#define BMP280_CTRL_MEAS  0xF4
+#define BMP280_STATUS     0xF3
+#define BMP280_RESET      0xE0
+#define BMP280_ID         0xD0  // should be 0x58
+#define BMP280_CALIB00    0x88
+
+// BNO055 Register Map
+// http://ae-bst.resource.bosch.com/media/products/dokumente/bno055/BST_BNO055_DS000_10_Release.pdf
+//
+// BNO055 Page 0
+#define BNO055_CHIP_ID          0x00    // should be 0xA0              
+#define BNO055_ACC_ID           0x01    // should be 0xFB              
+#define BNO055_MAG_ID           0x02    // should be 0x32              
+#define BNO055_GYRO_ID          0x03    // should be 0x0F              
+#define BNO055_SW_REV_ID_LSB    0x04                                                                          
+#define BNO055_SW_REV_ID_MSB    0x05
+#define BNO055_BL_REV_ID        0x06
+#define BNO055_PAGE_ID          0x07
+#define BNO055_ACC_DATA_X_LSB   0x08
+#define BNO055_ACC_DATA_X_MSB   0x09
+#define BNO055_ACC_DATA_Y_LSB   0x0A
+#define BNO055_ACC_DATA_Y_MSB   0x0B
+#define BNO055_ACC_DATA_Z_LSB   0x0C
+#define BNO055_ACC_DATA_Z_MSB   0x0D
+#define BNO055_MAG_DATA_X_LSB   0x0E
+#define BNO055_MAG_DATA_X_MSB   0x0F
+#define BNO055_MAG_DATA_Y_LSB   0x10
+#define BNO055_MAG_DATA_Y_MSB   0x11
+#define BNO055_MAG_DATA_Z_LSB   0x12
+#define BNO055_MAG_DATA_Z_MSB   0x13
+#define BNO055_GYR_DATA_X_LSB   0x14
+#define BNO055_GYR_DATA_X_MSB   0x15
+#define BNO055_GYR_DATA_Y_LSB   0x16
+#define BNO055_GYR_DATA_Y_MSB   0x17
+#define BNO055_GYR_DATA_Z_LSB   0x18
+#define BNO055_GYR_DATA_Z_MSB   0x19
+#define BNO055_EUL_HEADING_LSB  0x1A
+#define BNO055_EUL_HEADING_MSB  0x1B
+#define BNO055_EUL_ROLL_LSB     0x1C
+#define BNO055_EUL_ROLL_MSB     0x1D
+#define BNO055_EUL_PITCH_LSB    0x1E
+#define BNO055_EUL_PITCH_MSB    0x1F
+#define BNO055_QUA_DATA_W_LSB   0x20
+#define BNO055_QUA_DATA_W_MSB   0x21
+#define BNO055_QUA_DATA_X_LSB   0x22
+#define BNO055_QUA_DATA_X_MSB   0x23
+#define BNO055_QUA_DATA_Y_LSB   0x24
+#define BNO055_QUA_DATA_Y_MSB   0x25
+#define BNO055_QUA_DATA_Z_LSB   0x26
+#define BNO055_QUA_DATA_Z_MSB   0x27
+#define BNO055_LIA_DATA_X_LSB   0x28
+#define BNO055_LIA_DATA_X_MSB   0x29
+#define BNO055_LIA_DATA_Y_LSB   0x2A
+#define BNO055_LIA_DATA_Y_MSB   0x2B
+#define BNO055_LIA_DATA_Z_LSB   0x2C
+#define BNO055_LIA_DATA_Z_MSB   0x2D
+#define BNO055_GRV_DATA_X_LSB   0x2E
+#define BNO055_GRV_DATA_X_MSB   0x2F
+#define BNO055_GRV_DATA_Y_LSB   0x30
+#define BNO055_GRV_DATA_Y_MSB   0x31
+#define BNO055_GRV_DATA_Z_LSB   0x32
+#define BNO055_GRV_DATA_Z_MSB   0x33
+#define BNO055_TEMP             0x34
+#define BNO055_CALIB_STAT       0x35
+#define BNO055_ST_RESULT        0x36
+#define BNO055_INT_STATUS       0x37
+#define BNO055_SYS_CLK_STATUS   0x38
+#define BNO055_SYS_STATUS       0x39
+#define BNO055_SYS_ERR          0x3A
+#define BNO055_UNIT_SEL         0x3B
+#define BNO055_OPR_MODE         0x3D
+#define BNO055_PWR_MODE         0x3E
+#define BNO055_SYS_TRIGGER      0x3F
+#define BNO055_TEMP_SOURCE      0x40
+#define BNO055_AXIS_MAP_CONFIG  0x41
+#define BNO055_AXIS_MAP_SIGN    0x42
+#define BNO055_ACC_OFFSET_X_LSB 0x55
+#define BNO055_ACC_OFFSET_X_MSB 0x56
+#define BNO055_ACC_OFFSET_Y_LSB 0x57
+#define BNO055_ACC_OFFSET_Y_MSB 0x58
+#define BNO055_ACC_OFFSET_Z_LSB 0x59
+#define BNO055_ACC_OFFSET_Z_MSB 0x5A
+#define BNO055_MAG_OFFSET_X_LSB 0x5B
+#define BNO055_MAG_OFFSET_X_MSB 0x5C
+#define BNO055_MAG_OFFSET_Y_LSB 0x5D
+#define BNO055_MAG_OFFSET_Y_MSB 0x5E
+#define BNO055_MAG_OFFSET_Z_LSB 0x5F
+#define BNO055_MAG_OFFSET_Z_MSB 0x60
+#define BNO055_GYR_OFFSET_X_LSB 0x61
+#define BNO055_GYR_OFFSET_X_MSB 0x62
+#define BNO055_GYR_OFFSET_Y_LSB 0x63
+#define BNO055_GYR_OFFSET_Y_MSB 0x64
+#define BNO055_GYR_OFFSET_Z_LSB 0x65
+#define BNO055_GYR_OFFSET_Z_MSB 0x66
+#define BNO055_ACC_RADIUS_LSB   0x67
+#define BNO055_ACC_RADIUS_MSB   0x68
+#define BNO055_MAG_RADIUS_LSB   0x69
+#define BNO055_MAG_RADIUS_MSB   0x6A
+//
+// BNO055 Page 1
+#define BNO055_PAGE_ID          0x07
+#define BNO055_ACC_CONFIG       0x08
+#define BNO055_MAG_CONFIG       0x09
+#define BNO055_GYRO_CONFIG_0    0x0A
+#define BNO055_GYRO_CONFIG_1    0x0B
+#define BNO055_ACC_SLEEP_CONFIG 0x0C
+#define BNO055_GYR_SLEEP_CONFIG 0x0D
+#define BNO055_INT_MSK          0x0F
+#define BNO055_INT_EN           0x10
+#define BNO055_ACC_AM_THRES     0x11
+#define BNO055_ACC_INT_SETTINGS 0x12
+#define BNO055_ACC_HG_DURATION  0x13
+#define BNO055_ACC_HG_THRESH    0x14
+#define BNO055_ACC_NM_THRESH    0x15
+#define BNO055_ACC_NM_SET       0x16
+#define BNO055_GYR_INT_SETTINGS 0x17
+#define BNO055_GYR_HR_X_SET     0x18
+#define BNO055_GYR_DUR_X        0x19
+#define BNO055_GYR_HR_Y_SET     0x1A
+#define BNO055_GYR_DUR_Y        0x1B
+#define BNO055_GYR_HR_Z_SET     0x1C
+#define BNO055_GYR_DUR_Z        0x1D
+#define BNO055_GYR_AM_THRESH    0x1E
+#define BNO055_GYR_AM_SET       0x1F
+
+
 // Using the BNO055_BMP280 breakout board/Teensy 3.1 Add-On Shield, ADO is set to 1 by default 
 #define ADO 1
 #if ADO
@@ -214,7 +348,7 @@ uint8_t Gbw = GBW_23Hz;       // Gyro bandwidth
 uint8_t Ascale = AFS_18G;      // Accel full scale
 //uint8_t Aodr = AODR_250Hz;    // Accel sample rate
 uint8_t APwrMode = NormalA;    // Accel power mode
-uint8_t Abw = ABW_31_25Hz;    // Accel bandwidth, accel sample rate divided by ABW_divx
+uint8_t Abw = ABW_62_5Hz;    // Accel bandwidth, accel sample rate divided by ABW_divx
 //
 //uint8_t Mscale = MFS_4Gauss;  // Select magnetometer full-scale resolution
 uint8_t MOpMode = Regular;    // Select magnetometer perfomance mode
@@ -222,7 +356,7 @@ uint8_t MPwrMode = Normal;    // Select magnetometer power mode
 uint8_t Modr = MODR_10Hz;     // Select magnetometer ODR when in BNO055 bypass mode
 
 uint8_t PWRMode = Normalpwr;    // Select BNO055 power mode
-uint8_t OPRMode = NDOF;       // specify operation mode for sensors
+uint8_t OPRMode = ACCONLY;       // specify operation mode for sensors
 uint8_t status;               // BNO055 data status register
 float aRes, gRes, mRes;       // scale resolutions per LSB for the sensors
   
@@ -282,17 +416,17 @@ int16_t  dig_T2, dig_T3, dig_P2, dig_P3, dig_P4, dig_P5, dig_P6, dig_P7, dig_P8,
 
 void DebugSetup()
 {
-//  Wire.begin();
-//  TWBR = 12;  // 400 kbit/sec I2C speed for Pro Mini
-  // Setup for Master mode, pins 16/17, external pullups, 400kHz for Teensy 3.1
-  // Wire.begin(I2C_MASTER, 0x00, I2C_PINS_16_17, I2C_PULLUP_EXT, I2C_RATE_400);
-  // delay(4000);
-  // Serial.begin(38400);
+  //Wire.begin();
+  //TWBR = 12;  // 400 kbit/sec I2C speed for Pro Mini
+  //Setup for Master mode, pins 16/17, external pullups, 400kHz for Teensy 3.1
+  Wire.begin(I2C_MASTER, 0x00, I2C_PINS_16_17, I2C_PULLUP_EXT, I2C_RATE_400);
+  delay(2000);
+  //Serial.begin(38400);
   
-  // // Set up the interrupt pin, its set as active high, push-pull
-  // pinMode(intPin, INPUT);
-  // pinMode(myLed, OUTPUT);
-  // digitalWrite(myLed, HIGH);
+  // Set up the interrupt pin, its set as active high, push-pull
+  pinMode(intPin, INPUT);
+  pinMode(myLed, OUTPUT);
+  digitalWrite(myLed, HIGH);
   
   I2Cscan(); // check for I2C devices on the bus8
   
@@ -302,24 +436,23 @@ void DebugSetup()
   Serial.print("BNO055 Address = 0x"); Serial.println(BNO055_ADDRESS, HEX);
   Serial.print("BNO055 WHO_AM_I = 0x"); Serial.println(BNO055_CHIP_ID, HEX);
   Serial.print("BNO055 "); Serial.print("I AM "); Serial.print(c, HEX); Serial.println(" I should be 0xA0");  
-  delay(1000); 
+  delay(500); 
   
    
     // Read the WHO_AM_I register of the accelerometer, this is a good test of communication
   byte d = readByte(BNO055_ADDRESS, BNO055_ACC_ID);  // Read WHO_AM_I register for accelerometer
   Serial.print("BNO055 ACC "); Serial.print("I AM "); Serial.print(d, HEX); Serial.println(" I should be 0xFB");  
-  delay(1000); 
+  delay(300); 
   
   // Read the WHO_AM_I register of the magnetometer, this is a good test of communication
   byte e = readByte(BNO055_ADDRESS, BNO055_MAG_ID);  // Read WHO_AM_I register for magnetometer
   Serial.print("BNO055 MAG "); Serial.print("I AM "); Serial.print(e, HEX); Serial.println(" I should be 0x32");
-
-  delay(1000);   
+ 
   
   // Read the WHO_AM_I register of the gyroscope, this is a good test of communication
   byte f = readByte(BNO055_ADDRESS, BNO055_GYRO_ID);  // Read WHO_AM_I register for LIS3MDL
   Serial.print("BNO055 GYRO "); Serial.print("I AM "); Serial.print(f, HEX); Serial.println(" I should be 0x0F");
-  delay(1000); 
+  delay(200); 
 
   if (c == 0xA0) // BNO055 WHO_AM_I should always be 0xA0
   {  
@@ -359,7 +492,7 @@ void DebugSetup()
       Serial.println("MCU failed selftest"); 
     }
       
-    delay(1000);
+    delay(500);
   
   // Read the WHO_AM_I register of the BMP280 this is a good test of communication
   byte f = readByte(BMP280_ADDRESS, BMP280_ID);  // Read WHO_AM_I register for BMP280
@@ -369,7 +502,7 @@ void DebugSetup()
   Serial.print(" I should be "); 
   Serial.println(0x58, HEX);
   Serial.println(" ");
-  delay(1000); 
+  delay(500); 
 
   writeByte(BMP280_ADDRESS, BMP280_RESET, 0xB6); // reset BMP280 before initilization
   delay(100);
@@ -401,18 +534,18 @@ void DebugSetup()
   Serial.print("dig_P9 ="); 
   Serial.println(dig_P9);
  
-  accelgyroCalBNO055(accelBias, gyroBias);
+  //accelgyroCalBNO055(accelBias, gyroBias);
   
   Serial.println("Average accelerometer bias (mg) = "); Serial.println(accelBias[0]); Serial.println(accelBias[1]); Serial.println(accelBias[2]);
   Serial.println("Average gyro bias (dps) = "); Serial.println(gyroBias[0]); Serial.println(gyroBias[1]); Serial.println(gyroBias[2]);
   
-  delay(1000); 
+  delay(500); 
   
-  magCalBNO055(magBias);
+  //magCalBNO055(magBias);
   
   Serial.println("Average magnetometer bias (mG) = "); Serial.println(magBias[0]); Serial.println(magBias[1]); Serial.println(magBias[2]);
   
-  delay(1000); 
+  delay(500); 
   
   // Check calibration status of the sensors
   uint8_t calstat = readByte(BNO055_ADDRESS, BNO055_CALIB_STAT);
@@ -576,13 +709,13 @@ void notloop()
 //====== Set of useful function to access acceleration. gyroscope, magnetometer, and temperature data
 //===================================================================================================================
 
-void readAccelData(int16_t *accX, int16_t *accY, int16_t *accZ)
+void readAccelData(int16_t * arr)
 {
   uint8_t rawData[6];  // x/y/z accel register data stored here
   readBytes(BNO055_ADDRESS, BNO055_ACC_DATA_X_LSB, 6, &rawData[0]);  // Read the six raw data registers into data array
-  *accX = ((int16_t)rawData[1] << 8) | rawData[0] ;      // Turn the MSB and LSB into a signed 16-bit value
-  *accY = ((int16_t)rawData[3] << 8) | rawData[2] ;  
-  *accZ = ((int16_t)rawData[5] << 8) | rawData[4] ; 
+  arr[0] = ((int16_t)rawData[1] << 8) | rawData[0] ;      // Turn the MSB and LSB into a signed 16-bit value
+  arr[1] = ((int16_t)rawData[3] << 8) | rawData[2] ;  
+  arr[2] = ((int16_t)rawData[5] << 8) | rawData[4] ; 
 }
 
 
@@ -679,6 +812,7 @@ void initBNO055() {
 
 void accelgyroCalBNO055(float * dest1, float * dest2) 
 {
+	Serial.print("Im in");
   uint8_t data[6]; // data array to hold accelerometer and gyro x, y, z, data
   uint16_t ii = 0, sample_count = 0;
   int32_t gyro_bias[3]  = {0, 0, 0}, accel_bias[3] = {0, 0, 0};
@@ -693,19 +827,22 @@ void accelgyroCalBNO055(float * dest1, float * dest2)
    delay(25);
    writeByte(BNO055_ADDRESS, BNO055_OPR_MODE, AMG);
    
+   
  // In NDF fusion mode, accel full scale is at +/- 4g, ODR is 62.5 Hz, set it the same here
-   writeByte(BNO055_ADDRESS, BNO055_ACC_CONFIG, APwrMode << 5 | Abw << 2 | AFS_4G );
+   writeByte(BNO055_ADDRESS, BNO055_ACC_CONFIG, APwrMode << 5 | Abw << 2 | AFS_18G );
    sample_count = 256;
+   Serial.print("first1");
    for(ii = 0; ii < sample_count; ii++) {
     int16_t accel_temp[3] = {0, 0, 0};
     readBytes(BNO055_ADDRESS, BNO055_ACC_DATA_X_LSB, 6, &data[0]);  // Read the six raw data registers into data array
+	Serial.print("loop");
     accel_temp[0] = (int16_t) (((int16_t)data[1] << 8) | data[0]) ; // Form signed 16-bit integer for each sample in FIFO
     accel_temp[1] = (int16_t) (((int16_t)data[3] << 8) | data[2]) ;
     accel_temp[2] = (int16_t) (((int16_t)data[5] << 8) | data[4]) ;
     accel_bias[0]  += (int32_t) accel_temp[0];
     accel_bias[1]  += (int32_t) accel_temp[1];
     accel_bias[2]  += (int32_t) accel_temp[2];
-    delay(20);  // at 62.5 Hz ODR, new accel data is available every 16 ms
+    delay(100);  // at 62.5 Hz ODR, new accel data is available every 16 ms
    }
     accel_bias[0]  /= (int32_t) sample_count;  // get average accel bias in mg
     accel_bias[1]  /= (int32_t) sample_count;
@@ -716,8 +853,10 @@ void accelgyroCalBNO055(float * dest1, float * dest2)
 
     dest1[0] = (float) accel_bias[0];  // save accel biases in mg for use in main program
     dest1[1] = (float) accel_bias[1];  // accel data is 1 LSB/mg
-    dest1[2] = (float) accel_bias[2];          
-
+    dest1[2] = (float) accel_bias[2]; 
+	
+	Serial.print("past the loop!");
+	
  // In NDF fusion mode, gyro full scale is at +/- 2000 dps, ODR is 32 Hz
    writeByte(BNO055_ADDRESS, BNO055_GYRO_CONFIG_0, Gbw << 3 | GFS_2000DPS );
    writeByte(BNO055_ADDRESS, BNO055_GYRO_CONFIG_1, GPwrMode);for(ii = 0; ii < sample_count; ii++) {
@@ -1007,11 +1146,16 @@ void I2Cscan()
 	while (Wire.available()) {
         dest[i++] = Wire.read(); }         // Put read results in the Rx buffer
 }
-double BMPAltitude(){
-	 rawPress =  readBMP280Pressure();
-    Pressure = (float) bmp280_compensate_P(rawPress)/25600.; // Pressure in mbar
-    rawTemp =   readBMP280Temperature();
-  //  Temperature = (float) bmp280_compensate_T(rawTemp)/100.;
+float BMPAltitude(float seaLevel){
 
-    return (double) 145366.45f*(1.0f - pow((Pressure/1013.25f), 0.190284f));
+    rawTemp =   readBMP280Temperature();
+    Temperature = (float) bmp280_compensate_T(rawTemp)/100.;
+	rawPress =  readBMP280Pressure();
+    Pressure = (float) bmp280_compensate_P(rawPress)/25600.; // Pressure in mbar
+	float comp;
+	if(seaLevel == 0)
+		comp = 1013.25f;
+	else
+		comp = seaLevel;
+    return 145366.45f*(1.0f - pow((Pressure/comp), 0.190284f));
 }

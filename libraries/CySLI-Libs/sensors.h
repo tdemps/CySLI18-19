@@ -53,35 +53,22 @@ void BnoBmpSetup(){
 
 }
 
-void GetAcc(int16_t *accX, int16_t *accY, int16_t *accZ){
+void GetAcc(double *accX, double *accY, double *accZ){
 	
-	readAccelData(accX,accY,accZ);
+	int16_t arr[3];
+	readAccelData(arr);
+	
+	*accX =  (double) ( (double) arr[0] / 1000 * 32); //converting from mg to ft/s^2
+	*accY = (double) ( (double) arr[1] / 1000 * 32);
+	*accZ = (double) ( (double) arr[2] / 1000 * 32);
 	
     // Now we'll calculate the accleration value into actual mg's
-    accX = accX; // - accelBias[0];  // subtract off calculated accel bias
-    accY = accY; // - accelBias[1];
-    accZ = accZ; // - accelBias[2]; 
+    //accX = accX; // - accelBias[0];  // subtract off calculated accel bias
+    //accY = accY; // - accelBias[1];
+    //accZ = accZ; // - accelBias[2]; 
 	
 }
 
-// void GetAcc(int16_t *accX, int16_t *accY, int16_t *accZ){
-   // mpu.getAcceleration(accX, accY, accZ);
-   // *accX = map(*accX, 0, 2048, 0, 32);
-   // *accY = map(*accY, 0, 2048, 0, 32)-32; //if y is pointing up (or usb port) subtract 31
-   // *accZ = map(*accZ, 0, 2048, 0, 32); //pelican
- 
-   // /* Each 16-bit accelerometer measurement has a full scale defined in ACCEL_FS
- // * (Register 28). For each full scale setting, the accelerometers' sensitivity
- // * per LSB in ACCEL_xOUT is shown in the table below:
- // *
- // * <pre>
- // * AFS_SEL | Full Scale Range | LSB Sensitivity
- // * --------+------------------+----------------
- // * 0       | +/- 2g           | 8192 LSB/mg
- // * 1       | +/- 4g           | 4096 LSB/mg
- // * 2       | +/- 8g           | 2048 LSB/mg
- // * 3       | +/- 16g          | 1024 LSB/mg */
-// }
 
 
 //-------------------------------------------ALTIMETER-FUNCTIONS--------------------------------//
@@ -90,21 +77,18 @@ void GetAcc(int16_t *accX, int16_t *accY, int16_t *accZ){
 
 double GetAlt(){
 
-  /*Reads current air pressure to obtain altitude*/
   
-double a,P;
+  if(baseline == 0.0){
+	  Serial.print("Calibrating Barometer...");
+	  for(int i = 0; i < 20; i++){
+		baseline += BMPAltitude(); 
+		delay(500);
+	  }
+	 baseline = baseline / 20;
+	 Serial.println("Calibration Complete");
+  }
   
-  // // Get a new pressure reading:
-  // P = ms5611.readPressure();
-
-  // // Show the relative altitude difference between
-  // // the new reading and the baseline reading:
-  // a = ms5611.getAltitude(P,baseline);
-  
-  // //convert to ft and return
-  // return a*3.28084;
-  
-  return BMPAltitude(); //should be in feet
+  return BMPAltitude() - baseline; //should be in feet
   }
 
 

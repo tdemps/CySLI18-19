@@ -161,7 +161,7 @@ void notloop();
 //====== Set of useful function to access acceleration. gyroscope, magnetometer, and temperature data
 //===================================================================================================================
 
-void readAccelData(int16_t *accX, int16_t *accY, int16_t *accZ);
+void readAccelData(int16_t * arr);
 
 void readGyroData(int16_t * destination);
 
@@ -208,5 +208,5 @@ void writeByte(uint8_t address, uint8_t subAddress, uint8_t data);
 uint8_t readByte(uint8_t address, uint8_t subAddress);
 
 void readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t * dest);
-double BMPAltitude();
+double BMPAltitude(float seaLevel);
 #endif
