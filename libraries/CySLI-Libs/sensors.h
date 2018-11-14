@@ -77,18 +77,19 @@ void GetAcc(double *accX, double *accY, double *accZ){
 
 double GetAlt(){
 
-  
+
   if(baseline == 0.0){
+	  delay(5000);
 	  Serial.print("Calibrating Barometer...");
-	  for(int i = 0; i < 20; i++){
-		baseline += BMPAltitude(); 
-		delay(500);
+	  for(int i = 0; i < 5; i++){
+		baseline += BMPAltitude(0); 
+		delay(300);
 	  }
-	 baseline = baseline / 20;
+	 baseline = baseline / 5;
 	 Serial.println("Calibration Complete");
   }
   
-  return BMPAltitude() - baseline; //should be in feet
+  return BMPAltitude(0) - baseline; //should be in feet
   }
 
 

@@ -19,12 +19,12 @@
 
 // ROCKET CONSTANTS
 #define g 32.174    // gravity, ft/s^2
-#define CDCLOSED 0.7  //The coefficient of drag when the air brakes are closed 
-#define AREACLOSED 0.25  //The frontal area of the rocket when the air brakes are closed, ft^2
+#define CDCLOSED 0.88  //The coefficient of drag when the air brakes are closed 
+#define AREACLOSED 0.035  //The frontal area of the rocket when the air brakes are closed, ft^2
 #define FINALHEIGHT 1200.0  //Apogee we want rocket to reach, in ft
 #define AIRDENSITY 0.0023 //Air density of launch field, lb/(g*ft^3)
 #define MASS 3   //Mass of the rocket, lb/g
-#define BURNOUTHEIGHT 400 //minimum height for brake actuation
+#define BURNOUTHEIGHT 300 //minimum height for brake actuation
 
 bool burnout = false; //current status of motor (false = motor active)
 bool brake = false; //status of the brakes (false = closing, true = opening)
@@ -64,7 +64,7 @@ void setup(){
   SDcardWriteSetup();    
   Burnout();
   digitalWrite(ledPin, LOW);    // set the LED off
-  delay(500);                  // wait for a second
+  //delay(500);                  // wait for a second
 }
 
 void loop() { // run code (main code) 
@@ -165,7 +165,7 @@ void Burnout(){
   UpdateData();
   UpdateData(); //these calibrate the prev values for filtering
   
-  while(accRefine < 30){ // simple launch detection using vertical acc, 100% necessary for real flights
+  while(accRefine < 5 && altRefine < 30){ // simple launch detection using vertical acc, 100% necessary for real flights
     UpdateData();
     WriteData();  // uncomment if data before launch is needed
   }
@@ -175,12 +175,12 @@ void Burnout(){
   while(!burnout){  //waits until burnout is complete
     UpdateData();
     WriteData();
-    if(accRefine <= -(g-1.0) && altRefine > BURNOUTHEIGHT) //pelican //checks if vertical acc is <= ~ -30 && is over a set height
+    if(accRefine <= 30 || altRefine > BURNOUTHEIGHT) //pelican //checks if vertical acc is <= ~ -30 && is over a set height
       burnout = true;
   }
   
   LogWrite(7);  //writes burnout event to datalog
- // Serial.println(F("leaving Burnout"));
+  Serial.println(F("leaving Burnout"));
 }
 
 void EndGame(){
@@ -231,6 +231,7 @@ void UpdateData(){
   
   time = millis();
   GetAcc(&accX, &accY, &accZ);
+  accY += 32.1;
   altitude  = GetAlt();
 
   altRefine = Kalman(altitude, altPrev, &PnextAlt);
@@ -245,7 +246,7 @@ void UpdateData(){
   AccPrev=accRefine;    // reassigns accRefine for initial acceleration at next integration cycle and kalman
   altPrev=altRefine;    // reassigns altRefine for initial altitude at next derivation and kalman
   velPrev = velocity;   // saves velocity for next kalman cycle
-  
+  delay(25);
   if(altRefine > maxHeight) //keep max height stored for apogee confirmation
     maxHeight = altRefine;
 }
@@ -268,7 +269,7 @@ void SerialTest(){
 
  /*For debugging, uncomment desired variables and 
      call this function within UpdateData()*/
-
+  Serial.print("Time: "); Serial.print(time); Serial.print(", ");
   Serial.print("rawAlt: "); Serial.print(altitude); Serial.print(" ,");
   Serial.print("AltRefine: "); Serial.print(altRefine); Serial.print(" ,");
   Serial.print("accX: " ); Serial.print(accX); Serial.print(",");

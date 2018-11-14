@@ -1146,7 +1146,7 @@ void I2Cscan()
 	while (Wire.available()) {
         dest[i++] = Wire.read(); }         // Put read results in the Rx buffer
 }
-float BMPAltitude(float seaLevel){
+double BMPAltitude(float seaLevel){
 
     rawTemp =   readBMP280Temperature();
     Temperature = (float) bmp280_compensate_T(rawTemp)/100.;
