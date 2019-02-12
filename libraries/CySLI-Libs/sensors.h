@@ -1,5 +1,4 @@
 
-
 /**
 	This file contains functions related to sensors connected to Teensy.
 	All setup parameters and data fetching (ex. getAccel, getAlt) should
@@ -25,7 +24,7 @@
 #include <BNOBMPLib.h>
 
 //set output pins for various sensors below
-#define SERVO_PIN 47	//servo signal output pin.
+#define SERVO_PIN 29	//servo signal output pin.
 #define INIT_ANGLE 35	//servo's inital angle, or the "closed" angle for the brakes
 #define MAX_ANGLE 125	//maximum angle that brakes can be deployed
 #define SD_PIN BUILTIN_SDCARD		//data pin for SD Card
@@ -46,13 +45,23 @@ int testingLib(){
 	return 1;
 }
 
-//-----------------------------------------ACCELEROMETER-FUNCTIONS--------------------------------
+//-----------------------------------------ACCELEROMETER-FUNCTIONS---------------------------------------//
 
+/**
+  * Initializes the BNO055 and the BMP280 sensors.
+  *
+**/
 void BnoBmpSetup(){
 	DebugSetup();
 
 }
 
+//-------------------------------------------ACCELEROMETER-FUNCTIONS------------------------------------//
+
+/**
+  * Updates acceleration values in the X,Y, and Z axes. 
+  *
+  **/ 
 void GetAcc(double *accX, double *accY, double *accZ){
 	
 	int16_t arr[3];
@@ -71,10 +80,13 @@ void GetAcc(double *accX, double *accY, double *accZ){
 
 
 
-//-------------------------------------------ALTIMETER-FUNCTIONS--------------------------------//
+//-------------------------------------------ALTIMETER-FUNCTIONS---------------------------------------//
 
 
-
+/**
+  * Gets the current altitude of the rocket in feet.
+  * @return current altitude relative to starting position, in feet.
+  **/
 double GetAlt(){
 
 
@@ -93,11 +105,14 @@ double GetAlt(){
   }
 
 
-//------------------------------------------------SERVO-FUNCTIONS-------------------------------------//
+//------------------------------------------------SERVO-FUNCTIONS---------------------------------------------//
+/**
+  * Actuates servo motor using brake parameter. If true, brakes will deploy 5 degrees unless max angle is reached.
+  * If false, brakes will close. 
+  * @param brake boolean value that determines brake actuation.
+  * @return Braking action taken for logWrite to log.
+  **/
 short ServoFunction(bool brake){
-  
-  /*Function that will close and open brakes. If brake a true, 
-    we want brakes to open. If false, brakes will closed. */
 	
   if(brake){
       if(pos < MAX_ANGLE){
@@ -113,13 +128,23 @@ short ServoFunction(bool brake){
   return -1;
 }
 
+/**
+  *Initializes pin on Teensy for PWM output to servo motor. 
+  *
+  **/
 void ServoSetup(){
   servo.attach(SERVO_PIN);
   servo.write(INIT_ANGLE);
 }
-
+/**
+  * Returns the current angle of the servo motor
+  * @return current angle of servo motor in degrees.
+  **/
 short getPos(){
 	return pos;
 }
 
+void ServoDetach(){
+	servo.detach();
+}
 #endif

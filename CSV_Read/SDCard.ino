@@ -2,8 +2,12 @@
 void SDcardSetup(){
   /*Set up sd card to read RC data*/
   
-  pinMode(SD_PIN, OUTPUT);
-    SD.begin(SD_PIN);  
+  //pinMode(SD_PIN, OUTPUT);
+  if(!SD.begin()){
+    Serial.println("Card init failed, is the card inserted?");
+    return;
+  }
+  Serial.println("SD Card initialized");  
 }
 
 void SDcardWriteSetup(){
@@ -26,10 +30,10 @@ void LogWrite(short reason){
       break;
     case 3:dataFile.println(F("FREEFALL DETECTED"));
       break;
-    case 4:dataFile.println(F("BRAKE OPENED 5 DEG"));
-      break;
-    case 5: dataFile.println(F("BRAKE CLOSED"));
-      break;
+//    case 4:dataFile.println(F("BRAKE OPENED 5 DEG"));
+//      break;
+//    case 5: dataFile.println(F("BRAKE CLOSED"));
+//      break;
     case 6: dataFile.println(F("TARGET APOGEE REACHED, VEL > 0, BRAKING UNTIL FREEFALL"));
       break;
     case 7: dataFile.println(F("MOTOR BURNOUT"));

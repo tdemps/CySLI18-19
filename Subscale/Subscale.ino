@@ -55,9 +55,8 @@ void setup(){
   const int ledPin = 13;
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, HIGH);   // set the LED on
-  delay(500);                  // wait for a second
+  delay(100);                  // wait for a second
   SerialSetup();
-  Serial.print("Hello world");
   BnoBmpSetup();
  // ServoSetup();
   SDcardSetup();
@@ -169,13 +168,12 @@ void Burnout(){
     UpdateData();
     WriteData();  // uncomment if data before launch is needed
   }
-  
   velocity = 0; //gets rid of garbage velocity values from sitting on the pad
   
   while(!burnout){  //waits until burnout is complete
     UpdateData();
     WriteData();
-    if(accRefine <= 30 || altRefine > BURNOUTHEIGHT) //pelican //checks if vertical acc is <= ~ -30 && is over a set height
+    if(accRefine <= 30 && altRefine > BURNOUTHEIGHT) //pelican //checks if vertical acc is <= ~ -30 && is over a set height
       burnout = true;
   }
   
@@ -206,6 +204,7 @@ void EndGame(){
     while(getPos() < MAX_ANGLE){   // fully deploys brakes
       //LogWrite(ServoFunction(brake));
       WriteData();
+      UpdateData();
       delay(40);
     }
     while(true){
@@ -231,7 +230,7 @@ void UpdateData(){
   
   time = millis();
   GetAcc(&accX, &accY, &accZ);
-  accY += 32.1;
+  //accY += 32.1;
   altitude  = GetAlt();
 
   altRefine = Kalman(altitude, altPrev, &PnextAlt);
@@ -246,7 +245,7 @@ void UpdateData(){
   AccPrev=accRefine;    // reassigns accRefine for initial acceleration at next integration cycle and kalman
   altPrev=altRefine;    // reassigns altRefine for initial altitude at next derivation and kalman
   velPrev = velocity;   // saves velocity for next kalman cycle
-  delay(25);
+  delay(15  );
   if(altRefine > maxHeight) //keep max height stored for apogee confirmation
     maxHeight = altRefine;
 }
