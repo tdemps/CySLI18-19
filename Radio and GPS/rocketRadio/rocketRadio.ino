@@ -2,6 +2,7 @@
 #include<RH_RF95.h>
 #include<Adafruit_GPS.h>
 #include<SD.h>
+#include<Servo.h>
 
 #define RFM95_CS 8
 #define RFM95_RST 4
@@ -12,6 +13,7 @@
 //Initialize objects
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 Adafruit_GPS GPS(&GPSSerial);
+Servo myservo;
 
 //turn off echoing of GPS data to the Serial console
 #define GPSECHO false
@@ -59,6 +61,8 @@ void setup()
   GPS.begin(9600);
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
   GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
+  myservo.attach(12);
+  myservo.write(180);
 }
 
 void loop() 
@@ -83,6 +87,7 @@ void loop()
     {
       digitalWrite(LED, HIGH);
       RH_RF95::printBuffer("Received: ", buf, len);
+      Serial.print("Received: \""); Serial.print((char*)buf); Serial.println("\"");
       if(cmdCheck(buf,DEPLOY)==1){
         deploy();
         uint8_t reply[] = "Deploying payload...";
@@ -99,44 +104,44 @@ void loop()
         Serial.println("Sent command error.");
         digitalWrite(LED,LOW);
       }
-//      if (millis() - timer > 2000) {
-//        timer = millis(); // reset the timer
-//        Serial.print("\nTime: ");
-//        Serial.print(GPS.hour, DEC); Serial.print(':');
-//        Serial.print(GPS.minute, DEC); Serial.print(':');
-//        Serial.print(GPS.seconds, DEC); Serial.print('.');
-//        Serial.println(GPS.milliseconds);
-//        Serial.print("Date: ");
-//        Serial.print(GPS.day, DEC); Serial.print('/');
-//        Serial.print(GPS.month, DEC); Serial.print("/20");
-//        Serial.println(GPS.year, DEC);
-//        Serial.print("Fix: "); Serial.print((int)GPS.fix);
-//        Serial.print(" quality: "); Serial.println((int)GPS.fixquality);
-//        if (GPS.fix) {
-//          float latitude = GPS.latitude;
-//          float longitude = GPS.longitude;
-//          char lat = GPS.lat;
-//          char lon = GPS.lon;
-//          rf95.send((uint8_t*)&longitude,sizeof(longitude));
-//          rf95.waitPacketSent();
-//          rf95.send((uint8_t*)&lon, sizeof(lon));
-//          rf95.waitPacketSent();
-//          rf95.send((uint8_t*)&latitude,sizeof(latitude));
-//          rf95.waitPacketSent();
-//          rf95.send((uint8_t*)&lat,sizeof(lat));
-//          rf95.waitPacketSent();
-//          Serial.println("Sent GPS data:");
-//          Serial.println("\n Location: ");
-//          Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);
-//          Serial.print(", ");
-//          Serial.print(GPS.longitude, 4); Serial.println(GPS.lon);
-//          Serial.print("Speed (knots): "); Serial.println(GPS.speed);
-//          Serial.print("Angle: "); Serial.println(GPS.angle);
-//          Serial.print("Altitude: "); Serial.println(GPS.altitude);
-//          Serial.print("Satellites: "); Serial.println((int)GPS.satellites);
-//        }
-  }
-    //}
+      if (millis() - timer > 2000) {
+        timer = millis(); // reset the timer
+        Serial.print("\nTime: ");
+        Serial.print(GPS.hour, DEC); Serial.print(':');
+        Serial.print(GPS.minute, DEC); Serial.print(':');
+        Serial.print(GPS.seconds, DEC); Serial.print('.');
+        Serial.println(GPS.milliseconds);
+        Serial.print("Date: ");
+        Serial.print(GPS.day, DEC); Serial.print('/');
+        Serial.print(GPS.month, DEC); Serial.print("/20");
+        Serial.println(GPS.year, DEC);
+        Serial.print("Fix: "); Serial.print((int)GPS.fix);
+        Serial.print(" quality: "); Serial.println((int)GPS.fixquality);
+        if (GPS.fix) {
+          float latitude = GPS.latitude;
+          float longitude = GPS.longitude;
+          char lat = GPS.lat;
+          char lon = GPS.lon;
+          rf95.send((uint8_t*)&longitude,sizeof(longitude));
+          rf95.waitPacketSent();
+          rf95.send((uint8_t*)&lon, sizeof(lon));
+          rf95.waitPacketSent();
+          rf95.send((uint8_t*)&latitude,sizeof(latitude));
+          rf95.waitPacketSent();
+          rf95.send((uint8_t*)&lat,sizeof(lat));
+          rf95.waitPacketSent();
+          Serial.println("Sent GPS data:");
+          Serial.println("\n Location: ");
+          Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);
+          Serial.print(", ");
+          Serial.print(GPS.longitude, 4); Serial.println(GPS.lon);
+          Serial.print("Speed (knots): "); Serial.println(GPS.speed);
+          Serial.print("Angle: "); Serial.println(GPS.angle);
+          Serial.print("Altitude: "); Serial.println(GPS.altitude);
+          Serial.print("Satellites: "); Serial.println((int)GPS.satellites);
+        }
+      }
+    }
     else
     {
       Serial.println("Receive failed");
@@ -146,7 +151,7 @@ void loop()
 
 int cmdCheck(uint8_t *buf, uint8_t *ref)
 {
-  if(sizeof(buf)!=sizeof(ref))
+  if(sizeof(&buf)!=sizeof(&ref))
   {
     return 0;
   }
@@ -161,5 +166,6 @@ int cmdCheck(uint8_t *buf, uint8_t *ref)
 }
 
 void deploy(){
-  //Deploy payload by turning servo
+  myservo.attach(12);
+  myservo.write(90);
 }

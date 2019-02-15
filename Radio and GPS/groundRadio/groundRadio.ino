@@ -41,7 +41,7 @@ void loop() {
   Serial.println("Transmitting...");
   Serial.print("Enter command: ");
   //This needs to be user input
-  uint8_t cmd[] = "deploy";
+  uint8_t cmd[] = "deplo";
   Serial.println("\nSending command...");
   delay(10);
   rf95.send(cmd,sizeof(cmd));
@@ -50,9 +50,10 @@ void loop() {
   uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
   uint8_t len = sizeof(buf);
 
-  if(rf95.waitAvailableTimeout(1000)){
+  if(!rf95.waitAvailableTimeout(1000)){
     if(rf95.recv(buf, &len)){
-      Serial.print((char*)buf);
+      RH_RF95::printBuffer("Received: ", buf, len);
+      Serial.println((char*)buf);
     }
     else{
       Serial.println("Receive failed");
