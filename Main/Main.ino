@@ -17,16 +17,16 @@
 
 // ROCKET CONSTANTS
 #define g 32.174    // gravity, ft/s^2
-#define CDCLOSED 0.88  //The coefficient of drag when the air brakes are closed 
-#define AREACLOSED 0.035  //The frontal area of the rocket when the air brakes are closed, ft^2
+#define CDCLOSED 0.75  //The coefficient of drag when the air brakes are closed 
+#define AREACLOSED 0.08  //The frontal area of the rocket when the air brakes are closed, ft^2
 #define FINALHEIGHT 4750.0  //Apogee we want rocket to reach, in ft
 #define AIRDENSITY 0.0023 //Air density of launch field, lb/(g*ft^3)
 #define MASS 3   //Mass of the rocket, lb/g
 #define BURNOUTHEIGHT 1200 //minimum height for brake actuation
 
 // Testing parameters
-#define SERIALTEST 0
-#define SERVOTEST 0
+#define SERIALTEST 1
+#define SERVOTEST 1
 
 
 bool burnout = false; //current status of motor (false = motor active)
@@ -223,6 +223,8 @@ void EndGame(){
 
 void FallingProtocol(){
 
+  /*Closes brakes and locks program into loop for remainder of flight*/
+  
   LogWrite(3);    
   brake = false;
   LogWrite(ServoFunction(brake)); 
@@ -239,11 +241,11 @@ void UpdateData(){
   
   time = millis();
   GetAcc(&accX, &accY, &accZ);
-  accY += 32.1;
+  accX -= 32.1;
   altitude  = GetAlt();
 
   altRefine = Kalman(altitude, altPrev, &PnextAlt);
-  accRefine = Kalman(accY, AccPrev, &PnextAcc);
+  accRefine = Kalman(accX, AccPrev, &PnextAcc);
   
   velocity += Integrate(OldTime, time, accRefine); //Integrating to get new velocity  
 
@@ -261,7 +263,8 @@ void UpdateData(){
 
 void ServoTest(){ 
   
-  /*opens and closes brakes constantly for brake line/servo check */
+  /*opens and closes brakes constantly for brake/servo check */
+  
     Serial.println(getPos());
     if(getPos() == INIT_ANGLE)
       brake = true;
@@ -277,7 +280,7 @@ void ServoTest(){
 void SerialTest(){
 
  /*For debugging, uncomment desired variables and 
-     call this function within loop()*/
+     call this function within UpdateData()*/
      
   Serial.print("Time: "); Serial.print(time); Serial.print(", ");
   Serial.print("rawAlt: "); Serial.print(altitude); Serial.print(", ");
