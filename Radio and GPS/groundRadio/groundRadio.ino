@@ -14,6 +14,7 @@ void setup() {
   digitalWrite(RFM95_RST, HIGH);
 
   Serial.begin(115200);
+  // reason for this?
   while(!Serial){
     delay(1);
   }
@@ -37,12 +38,17 @@ void setup() {
 }
 
 void loop() {
+  // why delay?
   delay(1000);
   Serial.println("Transmitting...");
+  
+  // ???
   Serial.print("Enter command: ");
   //This needs to be user input
-  uint8_t cmd[] = "deplo";
+  uint8_t cmd[] = "deploy";
   Serial.println("\nSending command...");
+  
+  // why delay
   delay(10);
   rf95.send(cmd,sizeof(cmd));
   delay(10);
