@@ -20,31 +20,38 @@ void setup() {
 
   delay(100);
 
-  Serial.println("CySLI Ground Radio");
+  Serial.println("CySLI Ground Radio");  //Print CySLI radio startup message
 
+  //Check that initialization was successful
   while(!rf95.init()){
     Serial.println("CySLI Ground Radio init failed");
     while(1);
   }
   Serial.println("CySLI Ground Radio init OK!");
 
+  //Set frequency and check success
   if(!rf95.setFrequency(RF95_FREQ)){
     Serial.println("setFrequency failed");
     while(1);
   }
+  //Print set frequency
   Serial.print("Set Freq to: "); Serial.println(RF95_FREQ);
+  //Can set transmitter powers from 5 to 23 dBm
   rf95.setTxPower(23,false);
 }
 
+int16_t packetnum = 0;  //packet counter, we increment per xmission
+
 void loop() {
-  delay(1000);
-  Serial.println("Transmitting...");
-  Serial.print("Enter command: ");
+  delay(1000); // Wait 1 second between transmits
+  Serial.println("Transmitting..."); // Sent message to CySLI rocket radio
+  Serial.print("Enter command: "); // Prompt for command
   //This needs to be user input
-  uint8_t cmd[] = "deplo";
+  char *cmd = "deploy";
+  itoa(packetnum++, cmd+13, 10);
   Serial.println("\nSending command...");
   delay(10);
-  rf95.send(cmd,sizeof(cmd));
+  rf95.send((uint8_t *)cmd, sizeof(cmd));
   delay(10);
   rf95.waitPacketSent();
   uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];

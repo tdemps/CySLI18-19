@@ -9,6 +9,7 @@
 #define RFM95_INT 3
 #define RF95_FREQ 915.0
 #define GPSSerial Serial1
+#define SERVO_PIN 12
 
 //Initialize objects
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
@@ -27,68 +28,35 @@ uint8_t timer = millis();
 
 void setup()
 {
-  pinMode(LED, OUTPUT);
-  pinMode(RFM95_RST, OUTPUT);
-  digitalWrite(RFM95_RST, HIGH);
-
-  Serial.begin(115200);
-  while(!Serial) {
-    delay(1);
-  }
-  delay(100);
-
-  Serial.println("CySLI Onboard Radio & GPS");
-
-  // manual reset
-  digitalWrite(RFM95_RST, LOW);
-  delay(10);
-  digitalWrite(RFM95_RST, HIGH);
-  delay(10);
-
-  while(!rf95.init()) {
-    Serial.println("CySLI Onboard radio init failed");
-    while(1);
-  }
-  Serial.println("CySLI Onboard radio init OK!");
-
-  if(!rf95.setFrequency(RF95_FREQ)) {
-    Serial.println("setFrequency failed");
-    while(1);
-  }
-  Serial.print("Set Freq to: "); Serial.println(RF95_FREQ);
-
-  rf95.setTxPower(23,false);
-  GPS.begin(9600);
-  GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
-  myservo.attach(12);
-  myservo.write(180);
+  radioSetup();
+  GPSsetup();
+  servoSetup();
 }
 
-void loop() 
+void loop()
 {
-  if(rf95.available())
+  if (rf95.available())
   {
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
     uint8_t len = sizeof(buf);
 
     //GPS initialization stuff
-//    char c = GPS.read();
-//    if (GPSECHO)
-//      if (c) Serial.print(c);
-//    if (GPS.newNMEAreceived()){
-//      Serial.println(GPS.lastNMEA());
-//      if(!GPS.parse(GPS.lastNMEA()))
-//        return;
-//    }
-//    if (timer > millis()) timer = millis();
+    //    char c = GPS.read();
+    //    if (GPSECHO)
+    //      if (c) Serial.print(c);
+    //    if (GPS.newNMEAreceived()){
+    //      Serial.println(GPS.lastNMEA());
+    //      if(!GPS.parse(GPS.lastNMEA()))
+    //        return;
+    //    }
+    //    if (timer > millis()) timer = millis();
 
-    if(rf95.recv(buf, &len))
+    if (rf95.recv(buf, &len))
     {
       digitalWrite(LED, HIGH);
       RH_RF95::printBuffer("Received: ", buf, len);
       Serial.print("Received: \""); Serial.print((char*)buf); Serial.println("\"");
-      if(cmdCheck(buf,DEPLOY)==1){
+      if (cmdCheck(buf, DEPLOY) == 1) {
         deploy();
         uint8_t reply[] = "Deploying payload...";
         rf95.send(reply, sizeof(reply));
@@ -99,10 +67,10 @@ void loop()
       else
       {
         uint8_t reply[] = "Command not recognized.";
-        rf95.send(reply,sizeof(reply));
+        rf95.send(reply, sizeof(reply));
         rf95.waitPacketSent();
         Serial.println("Sent command error.");
-        digitalWrite(LED,LOW);
+        digitalWrite(LED, LOW);
       }
       if (millis() - timer > 2000) {
         timer = millis(); // reset the timer
@@ -122,13 +90,13 @@ void loop()
           float longitude = GPS.longitude;
           char lat = GPS.lat;
           char lon = GPS.lon;
-          rf95.send((uint8_t*)&longitude,sizeof(longitude));
+          rf95.send((uint8_t*)&longitude, sizeof(longitude));
           rf95.waitPacketSent();
           rf95.send((uint8_t*)&lon, sizeof(lon));
           rf95.waitPacketSent();
-          rf95.send((uint8_t*)&latitude,sizeof(latitude));
+          rf95.send((uint8_t*)&latitude, sizeof(latitude));
           rf95.waitPacketSent();
-          rf95.send((uint8_t*)&lat,sizeof(lat));
+          rf95.send((uint8_t*)&lat, sizeof(lat));
           rf95.waitPacketSent();
           Serial.println("Sent GPS data:");
           Serial.println("\n Location: ");
@@ -149,15 +117,16 @@ void loop()
   }
 }
 
+// function to check that command matches a valid command
 int cmdCheck(uint8_t *buf, uint8_t *ref)
 {
-  if(sizeof(&buf)!=sizeof(&ref))
+  if (sizeof(&buf) != sizeof(&ref))
   {
     return 0;
   }
   int len = sizeof(buf);
-  for(int i = 0; i<len; i++){
-    if(buf[i]!=ref[i])
+  for (int i = 0; i < len; i++) {
+    if (buf[i] != ref[i])
     {
       return 0;
     }
@@ -165,7 +134,80 @@ int cmdCheck(uint8_t *buf, uint8_t *ref)
   return 1;
 }
 
-void deploy(){
+// Function to turn the servo for deployment
+void deploy() {
   myservo.attach(12);
   myservo.write(90);
+}
+
+//Setup function for Feather M0
+void radioSetup() {
+  pinMode(LED, OUTPUT);
+  pinMode(RFM95_RST, OUTPUT);
+  digitalWrite(RFM95_RST, HIGH);
+
+  Serial.begin(115200);
+  while (!Serial) {
+    delay(1);
+  }
+  delay(100);
+
+  // Print startup messager for CySLI payload radio
+  Serial.println("CySLI Onboard Radio & GPS");
+
+  // manual reset
+  digitalWrite(RFM95_RST, LOW);
+  delay(10);
+  digitalWrite(RFM95_RST, HIGH);
+  delay(10);
+
+  while (!rf95.init()) {
+    Serial.println("CySLI Onboard radio init failed");
+    while (1);
+  }
+  Serial.println("CySLI Onboard radio init OK!");
+
+  if (!rf95.setFrequency(RF95_FREQ)) {
+    Serial.println("setFrequency failed");
+    while (1);
+  }
+  Serial.print("Set Freq to: "); Serial.println(RF95_FREQ);
+
+  rf95.setTxPower(23, false);
+}
+
+//Setup function for the GPS module
+void GPSsetup() {
+  // Print startup message
+  Serial.println("Setting up GPS module.");
+
+  // Default baud rate
+  GPS.begin(9600);
+  GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+
+  // Set update rate to 1Hz
+  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
+
+  delay(1000);
+
+  // Ask for firmware version
+  GPSSerial.println(PMTK_Q_RELEASE);
+}
+
+// Setup function for servo
+void servoSetup() {
+  myservo.attach(SERVO_PIN);
+}
+
+char *getLocation(Adafruit_GPS GPS){
+  char buf[50];
+  char latStr[10];
+  char lonStr[10];
+  double lat = (double)GPS.latitude;
+  double lon = (double)GPS.longitude;
+  dtostrf(lat, 8,4, latStr);
+  dtostrf(lon, 8,4, lonStr);
+  sprintf(buf, "Location: %s%c, %s%c", latStr, GPS.lat, lonStr, GPS.lon);
+  Serial.print(buf);
+  return buf;
 }
