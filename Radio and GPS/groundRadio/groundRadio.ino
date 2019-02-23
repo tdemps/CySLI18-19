@@ -43,6 +43,7 @@ void setup() {
 int16_t packetnum = 0;  //packet counter, we increment per xmission
 
 void loop() {
+<<<<<<< HEAD
   delay(1000); // Wait 1 second between transmits
   Serial.println("Transmitting..."); // Sent message to CySLI rocket radio
   Serial.print("Enter command: "); // Prompt for command
@@ -50,6 +51,17 @@ void loop() {
   char *cmd = "deploy";
   itoa(packetnum++, cmd+13, 10);
   Serial.println("\nSending command...");
+=======
+  // why do we need to delay a second?
+  delay(1000);
+  Serial.println("Transmitting...");
+  // what's up with the user commands
+  Serial.println("Enter command: ");
+  //This needs to be user input
+  uint8_t cmd[] = "deploy";
+  Serial.println("Sending deploy command...");
+  // why the delays?
+>>>>>>> 106706dad24999226f74b9adcb3777915b5d7105
   delay(10);
   rf95.send((uint8_t *)cmd, sizeof(cmd));
   delay(10);
