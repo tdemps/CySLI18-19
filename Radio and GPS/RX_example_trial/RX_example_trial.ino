@@ -1,13 +1,3 @@
-// rf69 demo tx rx.pde
-// -*- mode: C++ -*-
-// Example sketch showing how to create a simple messageing client
-// with the RH_RF69 class. RH_RF69 class does not provide for addressing or
-// reliability, so you should only use RH_RF69  if you do not need the higher
-// level messaging abilities.
-// It is designed to work with the other example rf69_server.
-// Demonstrates the use of AES encryption, setting the frequency and modem 
-// configuration
-
 #include <SPI.h>
 #include <RH_RF95.h>
 #include <Servo.h>
@@ -33,48 +23,63 @@ Servo servo;
 
 void setup() 
 {
+  // initializing all pins and any servos
   Serial.begin(115200);
-
-  pinMode(LED, OUTPUT);     
+  pinMode(LED, OUTPUT); 
+  pinMode(EMATCH, OUTPUT);    
   pinMode(RFM95_RST, OUTPUT);
+  // don't know why it's set low here only to be set low again later
+  // but I know it doesn't want to work when it's set high and
+  // low again so I'm leaving this in
   digitalWrite(RFM95_RST, LOW);
-
-  Serial.println("Feather RFM69 RX Test!");
+  servo.attach(5);
 
   // manual reset, need to keep so init doesn't fail
   digitalWrite(RFM95_RST, LOW);
   delay(10);
   digitalWrite(RFM95_RST, HIGH);
   delay(10);
-  
+  digitalWrite(EMATCH,LOW);
+  // starting the rf95 and setting its frequency
   if (!rf95.init()) {
     Serial.println("RFM95 radio init failed");
     while (1);
-  }
-  Serial.println("RFM95 radio init OK!");
-  
+  }  
   if (!rf95.setFrequency(RF95_FREQ)) {
     Serial.println("setFrequency failed");
   }
 
-  // If you are using a high power RF69 eg RFM69HW, you *must* set a Tx power with the
-  // ishighpowermodule flag set like this:
-  rf95.setTxPower(23, true);  // range from 14-23 for power, 2nd arg must be true for 69HCW
-  servo.attach(5);
-  pinMode(LED, OUTPUT);
-  pinMode(EMATCH, OUTPUT);
-  Serial.print("RFM95 radio @");  Serial.print((int)RF95_FREQ);  Serial.println(" MHz");
+  // range from ?-23 for power
+  rf95.setTxPower(23, true);  
+
+  // basically leaving this in as a proof of a successful init
+  Serial.print("Receiver Ready");
 }
 
 
 void loop() {
- if (rf95.available()) {
-    // Should be a message for us now   
+  // checking if we received anything
+  if (rf95.available()) {
+
+    // setting the max size of the message
+    // I think it's defined in the library
+    // not sure what it is but I know it's 
+    // less than 20 so we should stay under
+    // that on the transmitter side. 
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
     uint8_t len = sizeof(buf);
+
+    // if recv returns with a message, let's look at it
     if (rf95.recv(buf, &len)) {
+
+      // if it's empty, leave
       if (!len) return;
+
+      // not sure why it's set to 0, maybe try taking out and seeing what happens
       buf[len] = 0;
+
+      // won't really need these on launch day because can't see the serial port
+      // on this end, should delete sooner than later. 
       Serial.print("Received [");
       Serial.print(len);
       Serial.print("]: ");
@@ -82,25 +87,29 @@ void loop() {
 //      Serial.print("RSSI: ");
 //      Serial.println(rf95.lastRssi(), DEC);
 
+      // if the message was "in", move the pins in towards the center releasing
+      // the retention system
       if (strstr((char *)buf, "in")) {
         // Send a reply!
-        // todo: send back GPS here
         uint8_t data[] = "received in";
         rf95.send(data, sizeof(data));
         rf95.waitPacketSent();
         Serial.println("turned pins in");
-//        Blink(LED, 1000, 3); //blink LED 3 times, 40ms between blinks
         servo.write(0);
+
+      // if message was "out", move the pins out engaging the retention system
       } else if (strstr((char *)buf, "out")) {
         // send acknowledgement
-        // todo: send back GPS here
-
         uint8_t data[] = "moved pins out";
         rf95.send(data, sizeof(data));
         rf95.waitPacketSent();
         Serial.println("Sent a reply");
-//        Blink(LED, 40, 3); //blink LED 3 times, 40ms between blinks
         servo.write(60);
+
+      // if the message was fire, send current to the ematch, we'll eventually have
+      // to move this to a new script specifically for the rover deployment feather
+      // could leave it in since it wouldn't hurt anything as long as nothing is in
+      // pin 11 on the rover retention feather.
       } else if (strstr((char *)buf, "fire")) {
         // acknowledge
         // todo: send back GPS here
@@ -110,20 +119,11 @@ void loop() {
         rf95.waitPacketSent();
         Serial.println("Sent a reply");
         digitalWrite(EMATCH, HIGH);
-        
+        delay(2000);
+        digitalWrite(EMATCH, LOW);
       }
     } else {
       Serial.println("Receive failed");
     }
-  }
-}
-
-
-void Blink(byte PIN, byte DELAY_MS, byte loops) {
-  for (byte i=0; i<loops; i++)  {
-    digitalWrite(PIN,HIGH);
-    delay(DELAY_MS);
-    digitalWrite(PIN,LOW);
-    delay(DELAY_MS);
   }
 }

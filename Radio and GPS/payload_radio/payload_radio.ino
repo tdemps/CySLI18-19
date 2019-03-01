@@ -48,9 +48,9 @@ void setup()
   Serial.begin(115200);
 
   //This can be commented out or removed. It is here so we can see startup messages/errors
-  while (!Serial) {
-    delay(1);
-  }
+//  while (!Serial) {
+//    delay(1);
+//  }
 
   Serial.println("Starting setup...");
   radioSetup();  // Setup radio
@@ -86,13 +86,9 @@ void loop() {
       Serial.print("Received [");
       Serial.print(len);
       Serial.print("]: ");
-      //      Serial.println((char*)buf);
-      //      Serial.print("RSSI: ");
-      //      Serial.println(rf95.lastRssi(), DEC);
 
       if (strstr((char *)buf, "in")) {
         // Send a reply!
-        // todo: send back GPS here
         uint8_t data[] = "received in";
         rf95.send(data, sizeof(data));
         rf95.waitPacketSent();
@@ -101,7 +97,6 @@ void loop() {
         servo.write(0);
       } else if (strstr((char *)buf, "out")) {
         // send acknowledgement
-        // todo: send back GPS here
 
         uint8_t data[] = "moved pins out";
         rf95.send(data, sizeof(data));
@@ -109,16 +104,17 @@ void loop() {
         Serial.println("Sent a reply");
         //        Blink(LED, 40, 3); //blink LED 3 times, 40ms between blinks
         servo.write(60);
+      
       } else if (strstr((char *)buf, "fire")) {
         // acknowledge
-        // todo: send back GPS here
-
         uint8_t data[] = "stand back, firing";
         rf95.send(data, sizeof(data));
         rf95.waitPacketSent();
         Serial.println("Sent a reply");
         digitalWrite(EMATCH, HIGH);
-
+        delay(1000);
+        digitalWrite(EMATCH, LOW);
+        
       } else if (strstr((char *)buf, "gpsOn")) {
         uint8_t data[] = "Turning ON GPS";
         rf95.send(data, sizeof(data));
