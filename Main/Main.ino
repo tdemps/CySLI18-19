@@ -1,4 +1,4 @@
-// formatting rules:
+ // formatting rules:
 // 1) { on same line as statement
 //   ex: if (condition) {
 // 2) multicomment lines go above line
@@ -7,24 +7,27 @@
 //      variable = 0;
 // 3) single line comments on same line, tabbed and spaced
 //  ex: variable = 0; // comment
-// 4) for function:what it does, name inputs and outputs with definition
-//  ex: see ApogeePrediction()
 // 5) variables have camel case starting with lowercase
 //  ex: helloWorld = 0;
 // 6) functions have camel case starting with uppercase
 //  ex: HelloWorld()
-
 
 #include <sensors.h>
 #include <SD.h>
 
 // ROCKET CONSTANTS
 #define g 32.174    // gravity, ft/s^2
-#define CDCLOSED 0.7  //The coefficient of drag when the air brakes are closed 
-#define AREACLOSED 0.25  //The frontal area of the rocket when the air brakes are closed, ft^2
-#define FINALHEIGHT 5000.0  //Apogee we want rocket to reach, in ft
+#define CDCLOSED 0.75  //The coefficient of drag when the air brakes are closed 
+#define AREACLOSED 0.08  //The frontal area of the rocket when the air brakes are closed, ft^2
+#define FINALHEIGHT 4750.0  //Apogee we want rocket to reach, in ft
 #define AIRDENSITY 0.0023 //Air density of launch field, lb/(g*ft^3)
 #define MASS 3   //Mass of the rocket, lb/g
+#define BURNOUTHEIGHT 1200 //minimum height for brake actuation
+
+// Testing parameters
+#define SERIALTEST 1
+#define SERVOTEST 1
+
 
 bool burnout = false; //current status of motor (false = motor active)
 bool brake = false; //status of the brakes (false = closing, true = opening)
@@ -49,25 +52,28 @@ unsigned long OldTime=0;  // time from previous loop, ms
 
 
 //Accelerations
-int16_t accX, accY, accZ;   // raw accelerations, ft/s^2
+double accX = 0.0, accY = 0.0, accZ = 0.0;   // raw accelerations, ft/s^2
 
 void setup(){
   SerialSetup();
-  MpuSetup();     
-  ms5611Setup();
+  Serial.print("Hello world");
+  const int ledPin = 13;
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, HIGH);   // set the LED on
+  BnoBmpSetup();
   ServoSetup();
-  SDcardSetup();
-  SDcardWriteSetup();    
+  SDcardSetup();    
   Burnout();
+  digitalWrite(ledPin, LOW);    // set the LED off
 }
 
 void loop() { // run code (main code) 
-
+  
   UpdateData();
-
-  if(burnout){
+  if(SERVOTEST)
+    ServoTest();
+  if(burnout && SERVOTEST == 0)
     ApogeePrediction(velocity);
-  }
 
   EndGame();
   
@@ -124,9 +130,8 @@ double ApogeePrediction(double vel){
   double k = 0.5 * AREACLOSED * CDCLOSED * AIRDENSITY; //from old code, check constants
   
   projHeight = (MASS / (2.0 * k)) * log(((MASS * g) +(k * vel * vel)) / (MASS * g)) + altRefine;
-  =5280
 
-  if (projHeight > (FINALHEIGHT + 15) ) //error of 15ft, pelican
+  if (projHeight > FINALHEIGHT ) //error of 15ft, pelican
   {
     brake = true;
   }
@@ -135,6 +140,7 @@ double ApogeePrediction(double vel){
     brake = false;
   }
   LogWrite(ServoFunction(brake));    //opens or closes brakes
+  return projHeight;
 }
 
 double Integrate(unsigned long prevTime, unsigned long currTime, double val) {
@@ -147,21 +153,18 @@ double Integrate(unsigned long prevTime, unsigned long currTime, double val) {
   
 double Derive(unsigned long OldTime, unsigned long time, double altPrev, double altRefine){
   
-  return (altRefine-altPrev)/( ((double) time -(double) OldTime) / 1000);
+  return (altRefine-altPrev)/( ((double) time -(double) OldTime) / 1000.0);
 }
 
 void Burnout(){
 
   /* Detects when the vertical acceleration is negative. Holds arduino hostage until it's satisfied*/
-  
-  //Burnout      //False when motor is on, true afterwards //output
-  
   UpdateData();
   UpdateData(); //these calibrate the prev values for filtering
   
-  while(accRefine < 30){ // simple launch detection using vertical acc, 100% necessary for real flights
+  while(accRefine < 5 && altRefine < 30){ // simple launch detection using vertical acc, 100% necessary for real flights
     UpdateData();
-    //WriteData();  // uncomment if data before launch is needed
+   // WriteData();  // uncomment if data before launch is needed
   }
   
   velocity = 0; //gets rid of garbage velocity values from sitting on the pad
@@ -169,12 +172,24 @@ void Burnout(){
   while(!burnout){  //waits until burnout is complete
     UpdateData();
     WriteData();
-    if(accRefine <= -(g-3.0) && altRefine > 1500) //pelican //checks if vertical acc is <= ~ -30 && is over a set height
+    if(accRefine <= 0 && altRefine > BURNOUTHEIGHT) //pelican //checks if vertical acc is <= ~ -30 && is over a set height
       burnout = true;
   }
   
   LogWrite(7);  //writes burnout event to datalog
- // Serial.println(F("leaving Burnout"));
+  Serial.println(F("Leaving Burnout, starting static braking sequence"));
+  
+  unsigned long burnoutTime = millis();
+  brake = true;
+  
+  while(millis() < (burnoutTime + 6000)){
+    LogWrite(ServoFunction(brake));
+    UpdateData();
+    WriteData();
+  }
+  brake = false;
+  LogWrite(ServoFunction(brake));
+  Serial.println("End of static brake deployment");
 }
 
 void EndGame(){
@@ -182,77 +197,81 @@ void EndGame(){
   /* Checks if apogee has been reached or if the rocket is on a poor trajectory. 
   If so, the brakes will permanently close and data will be logged until end of flight*/
 
-  if(  (maxHeight > (altRefine+30) ) && (velocity < -50)){ //checks for falling rocket using altitude and velocity
-
-      LogWrite(3);    
-      brake = false;
-      LogWrite(ServoFunction(brake)); //closes brakes since we set brake to false
-      WriteData();
+  if(maxHeight > (altRefine+50)){ //checks for falling rocket using altitude and velocity
+    FallingProtocol();
     
-      while(true){        //flight data will be logged until computer is turned off
-        UpdateData();
-        WriteData();
-      }
+  } else if(altRefine > FINALHEIGHT){ // failsafe if rocket goes over desired height 
     
-  } else if(altRefine > FINALHEIGHT){ // failsafe if rocket goes over 1 mile 
     LogWrite(6);
     brake = true;
+    
     while(getPos() < MAX_ANGLE){   // fully deploys brakes
       LogWrite(ServoFunction(brake));
       WriteData();
-      delay(40);
+      UpdateData();
     }
+    
     while(true){
         UpdateData();
         WriteData();
         if( maxHeight > (altRefine+25) ){ //checks for falling rocket, then closes brakes
-            LogWrite(3);    
-            brake = false;
-            LogWrite(ServoFunction(brake)); 
-    
-            while(true){        //flight data will be logged until computer is turned off
-                UpdateData();
-                WriteData();
-            }
+           FallingProtocol();
        }
     }
   }  
 }
 
+void FallingProtocol(){
+
+  /*Closes brakes and locks program into loop for remainder of flight*/
+  
+  LogWrite(3);    
+  brake = false;
+  LogWrite(ServoFunction(brake)); 
+  
+  while(true){        //flight data will be logged until computer is turned off
+      UpdateData();
+      WriteData();
+  }
+  
+}
 void UpdateData(){
   
   /* Updates all global variables for calculations */
   
   time = millis();
   GetAcc(&accX, &accY, &accZ);
+  accX -= 32.1;
   altitude  = GetAlt();
 
   altRefine = Kalman(altitude, altPrev, &PnextAlt);
-  accRefine = Kalman(accY, AccPrev, &PnextAcc);
+  accRefine = Kalman(accX, AccPrev, &PnextAcc);
   
   velocity += Integrate(OldTime, time, accRefine); //Integrating to get new velocity  
-  
-  //ServoTest();
-  SerialTest();
+
+  if(SERIALTEST)
+    SerialTest();
   
   OldTime=time;         // reassigns time for next integration cycle (move this to top of loop to eliminate any time delays between time and oldTime to have a better integration and derivation?)
   AccPrev=accRefine;    // reassigns accRefine for initial acceleration at next integration cycle and kalman
   altPrev=altRefine;    // reassigns altRefine for initial altitude at next derivation and kalman
   velPrev = velocity;   // saves velocity for next kalman cycle
-  
+  delay(10);
   if(altRefine > maxHeight) //keep max height stored for apogee confirmation
     maxHeight = altRefine;
 }
 
 void ServoTest(){ 
   
-  /*opens and closes brakes constantly for brake line/servo check */
+  /*opens and closes brakes constantly for brake/servo check */
   
+    Serial.println(getPos());
     if(getPos() == INIT_ANGLE)
       brake = true;
-    if(getPos() == MAX_ANGLE)
+    if(getPos() == MAX_ANGLE){
       brake = false;
-  
+      Serial.println("Closing brakes");
+    }
   LogWrite(ServoFunction(brake));
   delay(500);
 
@@ -262,14 +281,18 @@ void SerialTest(){
 
  /*For debugging, uncomment desired variables and 
      call this function within UpdateData()*/
-
-  Serial.print("rawAlt: "); Serial.print(altitude); Serial.print(" ,");
-  //Serial.print("AltRefine: "); Serial.print(altRefine); Serial.print(" ,");
-  Serial.print("accY: "); Serial.print(accY); Serial.print(" , "); Serial.print(accX);
-  //Serial.print("AccRefine: "); Serial.print(accRefine); Serial.print(" ,");
-  Serial.print("Velocity: "); Serial.print(velocity); Serial.print(" ,");
+     
+  Serial.print("Time: "); Serial.print(time); Serial.print(", ");
+  Serial.print("rawAlt: "); Serial.print(altitude); Serial.print(", ");
+  Serial.print("AltRefine: "); Serial.print(altRefine); Serial.print(", ");
+  Serial.print("accX: " ); Serial.print(accX); Serial.print(", ");
+  Serial.print("accY: "); Serial.print(accY); Serial.print(", ");
+  Serial.print("accZ: " ); Serial.print(accZ); Serial.print(", ");
+  Serial.print("AccRefine: "); Serial.print(accRefine); Serial.print(", ");
+  Serial.print("Servo Angle: "); Serial.print(getPos()); Serial.print(", ");
+  Serial.print("Vel: "); Serial.print(velocity); Serial.print(" ,");
   
   Serial.println(""); // prints new line
-  delay(500);         // optional delay of output
+  delay(100);         // optional delay of output
  
 }

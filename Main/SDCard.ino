@@ -3,13 +3,23 @@ void SDcardSetup(){
   /*Set up sd card to read RC data*/
   
   pinMode(SD_PIN, OUTPUT);
-    SD.begin(SD_PIN);  
-}
-
-void SDcardWriteSetup(){
+  if(!SD.begin(SD_PIN)){
+    Serial.println("Card init failed, is the card inserted?");
+    return;
+  }
+  Serial.println("SD Card initialized");
+  delay(300);
+  Serial.println("Initializing Data.txt.....");
+  
   File dataFile = SD.open("Data.txt", FILE_WRITE);
-  dataFile.println(F("Time(ms),Height(ft),F Alt(ft),AccX(ft/s^2),AccY(ft/s^2),AccZ(ft/s^2),Brake Angle, F Acc(ft/s^2),zVel(ft/s),AP(ft)"));
-  dataFile.close(); 
+  if(dataFile){
+    Serial.println("Data.txt successfully opened");
+    dataFile.println(F("Time(s),Height(ft),F Alt(ft),AccX(ft/s^2),AccY(ft/s^2),AccZ(ft/s^2),Brake Angle, F Acc(ft/s^2),zVel(ft/s),AP(ft)"));
+    dataFile.close(); 
+    Serial.println("SD card writing initialized");
+    return;
+  }else
+    Serial.println("File opening failed, check SD card connections");
 }
 
 void LogWrite(short reason){
@@ -43,7 +53,7 @@ void WriteData(){
  File dataFile = SD.open("Data.txt", FILE_WRITE);
 // if(dataFile)
 //      Serial.println(F("file successfully opened"));
- dataFile.print(time);
+ dataFile.print(time / 1000);
  dataFile.print(",");
  dataFile.print(altitude);
  dataFile.print(",");

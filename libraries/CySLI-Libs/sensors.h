@@ -1,5 +1,4 @@
 
-
 /**
 	This file contains functions related to sensors connected to Teensy.
 	All setup parameters and data fetching (ex. getAccel, getAlt) should
@@ -17,23 +16,20 @@
 
 //ex. include <BMP280.h>
 
-#include <I2Cdev.h>   // provides simple and intuitive interfaces to I2C devices
-#include <MPU6050.h>  // IMU library
-#include <Wire.h>   // allows you to communicate with I2C / TWI devices
+#include <i2c_t3.h>   // provides simple and intuitive interfaces to I2C devices
+//#include <Wire.h>   // allows you to communicate with I2C / TWI devices
 #include <Servo.h>    // servo library
 #include <SPI.h>    // Serial Peripheral Interface(SPI) used for communicating with one or more peripheral devices quickly over short distances
 #include <limits.h>
-#include <MS5611.h>
+#include <BNOBMPLib.h>
 
 //set output pins for various sensors below
-#define SERVO_PIN 47	//servo signal output pin.
+#define SERVO_PIN 29	//servo signal output pin.
 #define INIT_ANGLE 35	//servo's inital angle, or the "closed" angle for the brakes
 #define MAX_ANGLE 125	//maximum angle that brakes can be deployed
-#define SD_PIN 53		//data pin for SD Card
+#define SD_PIN BUILTIN_SDCARD		//data pin for SD Card
 
 //C++ objects representing devices attached to Teensy/Arduinos.
-MS5611 ms5611;      //IMU1
-MPU6050 mpu;        //IMU2
 Servo servo;        // airbrake servo
 double baseline = 0.0;         // baseline pressure, taken during IMU setup
 
@@ -49,79 +45,74 @@ int testingLib(){
 	return 1;
 }
 
-//-----------------------------------------ACCELEROMETER-FUNCTIONS--------------------------------
-void MpuSetup(){
-    //joins I2C bus (I2Cdev library doesn't do this automatically) (Was found in available rocket code on internet) 
-    #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-        Wire.begin();
-    #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
-        Fastwire::setup(400, true);
-    #endif
-    mpu.initialize();
-    mpu.setFullScaleAccelRange(3);  //0=2g, 1=4g, 2=8g, 3=16g 
-    mpu.setFullScaleGyroRange(2); //0=250 deg/s, 1=500 deg/s, 2=1000 deg/s, 3=2000 deg/s 
+//-----------------------------------------ACCELEROMETER-FUNCTIONS---------------------------------------//
+
+/**
+  * Initializes the BNO055 and the BMP280 sensors.
+  *
+**/
+void BnoBmpSetup(){
+	DebugSetup();
+
 }
 
-void GetAcc(int16_t *accX, int16_t *accY, int16_t *accZ){
-   mpu.getAcceleration(accX, accY, accZ);
-   *accX = map(*accX, 0, 2048, 0, 32);
-   *accY = map(*accY, 0, 2048, 0, 32)-32; //if y is pointing up (or usb port) subtract 31
-   *accZ = map(*accZ, 0, 2048, 0, 32); //pelican
- 
-   /* Each 16-bit accelerometer measurement has a full scale defined in ACCEL_FS
- * (Register 28). For each full scale setting, the accelerometers' sensitivity
- * per LSB in ACCEL_xOUT is shown in the table below:
- *
- * <pre>
- * AFS_SEL | Full Scale Range | LSB Sensitivity
- * --------+------------------+----------------
- * 0       | +/- 2g           | 8192 LSB/mg
- * 1       | +/- 4g           | 4096 LSB/mg
- * 2       | +/- 8g           | 2048 LSB/mg
- * 3       | +/- 16g          | 1024 LSB/mg */
-}
+//-------------------------------------------ACCELEROMETER-FUNCTIONS------------------------------------//
 
-
-//-------------------------------------------ALTIMETER-FUNCTIONS--------------------------------//
-
-void ms5611Setup(){
-  ms5611.begin();
-  baseline = ms5611.readPressure();
-}
-
-double GetPressure(){
-  return ms5611.readPressure();
-}
-
-void Resetms5611(){
+/**
+  * Updates acceleration values in the X,Y, and Z axes. 
+  *
+  **/ 
+void GetAcc(double *accX, double *accY, double *accZ){
 	
-  baseline = ms5611.readPressure();
-  
+	int16_t arr[3];
+	readAccelData(arr);
+	
+	*accX =  (double) ( (double) arr[0] / 1000 * 32); //converting from mg to ft/s^2
+	*accY = (double) ( (double) arr[1] / 1000 * 32);
+	*accZ = (double) ( (double) arr[2] / 1000 * 32);
+	
+    // Now we'll calculate the accleration value into actual mg's
+    //accX = accX; // - accelBias[0];  // subtract off calculated accel bias
+    //accY = accY; // - accelBias[1];
+    //accZ = accZ; // - accelBias[2]; 
+	
 }
 
+
+
+//-------------------------------------------ALTIMETER-FUNCTIONS---------------------------------------//
+
+
+/**
+  * Gets the current altitude of the rocket in feet.
+  * @return current altitude relative to starting position, in feet.
+  **/
 double GetAlt(){
 
-  /*Reads current air pressure to obtain altitude*/
-  
-double a,P;
-  
-  // Get a new pressure reading:
-  P = ms5611.readPressure();
 
-  // Show the relative altitude difference between
-  // the new reading and the baseline reading:
-  a = ms5611.getAltitude(P,baseline);
+  if(baseline == 0.0){
+	  delay(5000);
+	  Serial.print("Calibrating Barometer...");
+	  for(int i = 0; i < 5; i++){
+		baseline += BMPAltitude(0); 
+		delay(300);
+	  }
+	 baseline = baseline / 5;
+	 Serial.println("Calibration Complete");
+  }
   
-  //convert to ft and return
-  return a*3.28084; 
+  return BMPAltitude(0) - baseline; //should be in feet
   }
 
 
-//------------------------------------------------SERVO-FUNCTIONS-------------------------------------//
+//------------------------------------------------SERVO-FUNCTIONS---------------------------------------------//
+/**
+  * Actuates servo motor using brake parameter. If true, brakes will deploy 5 degrees unless max angle is reached.
+  * If false, brakes will close. 
+  * @param brake boolean value that determines brake actuation.
+  * @return Braking action taken for logWrite to log.
+  **/
 short ServoFunction(bool brake){
-  
-  /*Function that will close and open brakes. If brake a true, 
-    we want brakes to open. If false, brakes will closed. */
 	
   if(brake){
       if(pos < MAX_ANGLE){
@@ -137,13 +128,23 @@ short ServoFunction(bool brake){
   return -1;
 }
 
+/**
+  *Initializes pin on Teensy for PWM output to servo motor. 
+  *
+  **/
 void ServoSetup(){
   servo.attach(SERVO_PIN);
   servo.write(INIT_ANGLE);
 }
-
+/**
+  * Returns the current angle of the servo motor
+  * @return current angle of servo motor in degrees.
+  **/
 short getPos(){
 	return pos;
 }
 
+void ServoDetach(){
+	servo.detach();
+}
 #endif
