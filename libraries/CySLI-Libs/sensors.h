@@ -25,8 +25,8 @@
 
 //set output pins for various sensors below
 #define SERVO_PIN 29	//servo signal output pin.
-#define INIT_ANGLE 35	//servo's inital angle, or the "closed" angle for the brakes
-#define MAX_ANGLE 125	//maximum angle that brakes can be deployed
+#define INIT_ANGLE 135	//servo's inital angle, or the "closed" angle for the brakes
+#define MAX_ANGLE 170	//maximum angle that brakes can be deployed
 #define SD_PIN BUILTIN_SDCARD		//data pin for SD Card
 
 //C++ objects representing devices attached to Teensy/Arduinos.

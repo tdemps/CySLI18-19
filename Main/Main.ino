@@ -21,12 +21,12 @@
 #define AREACLOSED 0.08  //The frontal area of the rocket when the air brakes are closed, ft^2
 #define FINALHEIGHT 4750.0  //Apogee we want rocket to reach, in ft
 #define AIRDENSITY 0.0023 //Air density of launch field, lb/(g*ft^3)
-#define MASS 3   //Mass of the rocket, lb/g
+#define MASS 20.31   //Mass of the rocket, lb/g
 #define BURNOUTHEIGHT 1200 //minimum height for brake actuation
 
 // Testing parameters
-#define SERIALTEST 1
-#define SERVOTEST 1
+#define SERIALTEST 0
+#define SERVOTEST 0
 
 
 bool burnout = false; //current status of motor (false = motor active)
@@ -63,7 +63,9 @@ void setup(){
   BnoBmpSetup();
   ServoSetup();
   SDcardSetup();    
-  Burnout();
+  if(SERVOTEST == 0){
+    Burnout();
+  }
   digitalWrite(ledPin, LOW);    // set the LED off
 }
 
