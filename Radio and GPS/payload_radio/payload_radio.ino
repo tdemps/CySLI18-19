@@ -20,7 +20,7 @@
 // Adafruit Feather M0 w/ LoRa Radio
 #define RFM95_CS      8
 #define RFM95_INT     3
-#define RFM95_RS  0T     4
+#define RFM95_RST     4
 
 // ematch, servo, and GPS
 #define EMATCH 13
