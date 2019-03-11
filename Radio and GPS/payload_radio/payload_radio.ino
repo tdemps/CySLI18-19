@@ -21,10 +21,9 @@
 #define RFM95_CS      8
 #define RFM95_INT     3
 #define RFM95_RST     4
-#define LED           13
 
 // ematch, servo, and GPS
-#define EMATCH 11
+#define EMATCH 13
 #define SERVO 5
 #define GPSSerial Serial1
 
@@ -48,15 +47,16 @@ void setup()
   Serial.begin(115200);
 
   //This can be commented out or removed. It is here so we can see startup messages/errors
-  while (!Serial) {
-    delay(1);
-  }
+//  while (!Serial) {
+//    delay(1);
+//  }
 
   Serial.println("Starting setup...");
   radioSetup();  // Setup radio
   servoSetup();  // Setup servo
   gpsSetup();  // Setup GPS
   pinMode(EMATCH, OUTPUT);
+  digitalWrite(EMATCH, LOW);
   Serial.println("Setup complete!");
 }
 
@@ -86,13 +86,9 @@ void loop() {
       Serial.print("Received [");
       Serial.print(len);
       Serial.print("]: ");
-      //      Serial.println((char*)buf);
-      //      Serial.print("RSSI: ");
-      //      Serial.println(rf95.lastRssi(), DEC);
 
       if (strstr((char *)buf, "in")) {
         // Send a reply!
-        // todo: send back GPS here
         uint8_t data[] = "received in";
         rf95.send(data, sizeof(data));
         rf95.waitPacketSent();
@@ -101,7 +97,6 @@ void loop() {
         servo.write(0);
       } else if (strstr((char *)buf, "out")) {
         // send acknowledgement
-        // todo: send back GPS here
 
         uint8_t data[] = "moved pins out";
         rf95.send(data, sizeof(data));
@@ -109,16 +104,17 @@ void loop() {
         Serial.println("Sent a reply");
         //        Blink(LED, 40, 3); //blink LED 3 times, 40ms between blinks
         servo.write(60);
+      
       } else if (strstr((char *)buf, "fire")) {
         // acknowledge
-        // todo: send back GPS here
-
         uint8_t data[] = "stand back, firing";
         rf95.send(data, sizeof(data));
         rf95.waitPacketSent();
         Serial.println("Sent a reply");
         digitalWrite(EMATCH, HIGH);
-
+        delay(1000);
+        digitalWrite(EMATCH, LOW);
+        
       } else if (strstr((char *)buf, "gpsOn")) {
         uint8_t data[] = "Turning ON GPS";
         rf95.send(data, sizeof(data));
@@ -168,19 +164,9 @@ void loop() {
 }
 
 
-void Blink(byte PIN, byte DELAY_MS, byte loops) {
-  for (byte i = 0; i < loops; i++)  {
-    digitalWrite(PIN, HIGH);
-    delay(DELAY_MS);
-    digitalWrite(PIN, LOW);
-    delay(DELAY_MS);
-  }
-}
-
-
 void radioSetup() {
 
-  pinMode(LED, OUTPUT);
+//  pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
   digitalWrite(RFM95_RST, LOW);
 
@@ -207,7 +193,7 @@ void radioSetup() {
   rf95.setTxPower(23, false);  // range from 14-23 for power, 2nd arg must be true for 69HCW
   Serial.print("RFM95 radio @");  Serial.print((int)RF95_FREQ);  Serial.println(" MHz");
 
-  pinMode(LED, OUTPUT);
+//  pinMode(LED, OUTPUT);
 }
 
 void servoSetup() {

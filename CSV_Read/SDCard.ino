@@ -2,24 +2,18 @@
 void SDcardSetup(){
   /*Set up sd card to read RC data*/
   
-  pinMode(SD_PIN, OUTPUT);
-  if(!SD.begin(SD_PIN)){
+  //pinMode(SD_PIN, OUTPUT);
+  if(!SD.begin()){
     Serial.println("Card init failed, is the card inserted?");
     return;
   }
-  Serial.println("SD Card initialized");
-  delay(300);
-  Serial.println("Initializing Data.txt.....");
-  
+  Serial.println("SD Card initialized");  
+}
+
+void SDcardWriteSetup(){
   File dataFile = SD.open("Data.txt", FILE_WRITE);
-  if(dataFile){
-    Serial.println("Data.txt successfully opened");
-    dataFile.println(F("Time(s),Height(ft),F Alt(ft),AccX(ft/s^2),AccY(ft/s^2),AccZ(ft/s^2),Brake Angle, F Acc(ft/s^2),zVel(ft/s),AP(ft)"));
-    dataFile.close(); 
-    Serial.println("SD card writing initialized");
-    return;
-  }else
-    Serial.println("File opening failed, check SD card connections");
+  dataFile.println(F("Time(ms),Height(ft),F Alt(ft),AccX(ft/s^2),AccY(ft/s^2),AccZ(ft/s^2),Brake Angle, F Acc(ft/s^2),zVel(ft/s),AP(ft)"));
+  dataFile.close(); 
 }
 
 void LogWrite(short reason){
@@ -36,10 +30,10 @@ void LogWrite(short reason){
       break;
     case 3:dataFile.println(F("FREEFALL DETECTED"));
       break;
-    case 4:dataFile.println(F("BRAKE OPENED 5 DEG"));
-      break;
-    case 5: dataFile.println(F("BRAKE CLOSED"));
-      break;
+//    case 4:dataFile.println(F("BRAKE OPENED 5 DEG"));
+//      break;
+//    case 5: dataFile.println(F("BRAKE CLOSED"));
+//      break;
     case 6: dataFile.println(F("TARGET APOGEE REACHED, VEL > 0, BRAKING UNTIL FREEFALL"));
       break;
     case 7: dataFile.println(F("MOTOR BURNOUT"));
@@ -53,7 +47,7 @@ void WriteData(){
  File dataFile = SD.open("Data.txt", FILE_WRITE);
 // if(dataFile)
 //      Serial.println(F("file successfully opened"));
- dataFile.print(time / 1000);
+ dataFile.print(time);
  dataFile.print(",");
  dataFile.print(altitude);
  dataFile.print(",");

@@ -5,56 +5,13 @@
 #include <SdFat.h>
 #include <SdFatConfig.h>
 #include <SysCall.h>
-#include <sensors.h>
-
-// CSV FILES MUST BE FORMATTED: TIME,ALTITUDE,AX,AY,AZ
-
-#define g 32.174    // gravity, ft/s^2
-#define CDCLOSED 0.7  //The coefficient of drag when the air brakes are closed 
-#define AREACLOSED 0.25  //The area of the rocket when the air brakes are closed, ft^2
-#define FINALHEIGHT 5280.0  //Final height we want rocket to reach at apogee, in ft
-#define AIRDENSITY 0.0023 //Air density of launch field, lb/(g*ft^3)
-#define MASS 3   //Mass of the rocket, lb/g
-#define BURNOUTHEIGHT 300
-
-bool burnout = false; //current status of motor (false = motor active)
-bool brake = false; //status of the brakes (false = closing, true = opening)
-
-//These are not all on the same line to comment them
-double AccPrev = 0;      // previous x acceleration
-double PnextAcc = 0;     // prediction of next x acceleration for kalman filter, used exclusively in the kalman function
-double PnextAlt = 0;    // prediction of next altitude for kalman filter, used exclusively in the kalman function
-double PnextVel = 0;    // prediction of next velocity for kalman filter
-double altPrev = 0;     // saved altitude from previous loop, ft
-double velPrev = 0;
-double altRefine = 0;   // smoothed altitude, ft
-double accRefine = 0;          // smoothed vertical acceleration, ft/s^2
-double velIntegral = 0; // integrated velocity from vertical acceleration, ft/s
-double velDerive = 0;   // derivated velocity from altitude, ft/s
-double velocity = 0;    // averaged velocity, ft/s
-double maxHeight = 0;   // current max height the rocket has reached in current flight, ft
-double projHeight = 0;
-double altitude = 0.0;
-double aCorrect = 0;
-double altCorrect = 0;
-
-unsigned long time=0;     // current time, ms
-unsigned long OldTime=0;  // time from previous loop, ms
-
 
 File csv;
 char delim = ',';
 SdFatSdioEX SD;
+  
+void CSVsetup(){
 
-//MPU 6050 Accelerations
-double accX, accY, accZ;   // unfiltered accelerations, ft/s^2
-
-void setup(){
-  SerialSetup();
-  BnoBmpSetup();
-  ServoSetup();
-  SDcardSetup();
-  SDcardWriteSetup();
   csv = SD.open("46lb_csv_read.csv", FILE_READ);
   if (!csv) {
     Serial.println("open failed");
@@ -66,9 +23,6 @@ void setup(){
   //csvSetup();
   csv.seek(0);
   delay(1000);
-  Serial.println("");   
-  
-  Burnout();
 }
 
 void loop() { // run code (main code) 
@@ -171,38 +125,31 @@ double Derive(unsigned long OldTime, unsigned long time, double altPrev, double 
 void Burnout(){
 
   /* Detects when the vertical acceleration is negative. Holds arduino hostage until it's satisfied*/
+  
+  //Burnout      //False when motor is on, true afterwards //output
+  
   UpdateData();
   UpdateData(); //these calibrate the prev values for filtering
+  UpdateData();
   
-  while(accRefine < 5 && altRefine < 30){ // simple launch detection using vertical acc, 100% necessary for real flights
+  while(accRefine < 30){ // simple launch detection using vertical acc, 100% necessary for test flight/competition
     UpdateData();
-   // WriteData();  // uncomment if data before launch is needed
+    //WriteData();  // uncomment if data before launch is needed
   }
-  
-  velocity = 0; //gets rid of garbage velocity values from sitting on the pad
+
+  Serial.println("launch");
+  velocity = velPrev = 0; //gets rid of garbage velocity values from sitting on the pad
+  delay(2000);
   
   while(!burnout){  //waits until burnout is complete
     UpdateData();
     WriteData();
-    if(accRefine <= 0 || altRefine > BURNOUTHEIGHT) //pelican //checks if vertical acc is <= ~ -30 && is over a set height
+    if(accRefine <= -(g-3.0) && altRefine > 1500) //pelican //checks if vertical acc is <= ~ -30 && is over a set height
       burnout = true;
   }
   
-  LogWrite(7);  //writes burnout event to datalog
-  Serial.println(F("Leaving Burnout, starting static braking sequence"));
-  delay(500);
-  unsigned long burnoutTime = millis();
-  brake = true;
-  
-  while(millis() < (burnoutTime + 8000)){
-    LogWrite(ServoFunction(brake));
-    UpdateData();
-    WriteData();
-  }
-  brake = false;
-  LogWrite(ServoFunction(brake));
-  Serial.println("End of static brake deployment");
-  delay(1000);
+  LogWrite(7);
+  Serial.println(F("leaving Burnout"));
 }
 
 void EndGame(){
@@ -229,6 +176,7 @@ void EndGame(){
     while(pos < MAX_ANGLE){   // fully deploys brakes
       ServoFunction(brake);
       WriteData();
+      delay(40);
     }
     //altCorrect += 1.5 * (pos-35) / 2;
     while(true){
@@ -236,7 +184,6 @@ void EndGame(){
         WriteData();
         altCorrect += 1.2 * (pos-35) / 2;
         if( maxHeight > (altRefine+25) ){ //checks for falling rocket, then closes brakes
-            Serial.println("Falling");
             LogWrite(3);    
             brake = false;
             ServoFunction(brake); 
@@ -251,7 +198,7 @@ void EndGame(){
 }
 
 
-void UpdateData(){
+void csvUpdateData(){
   
   /* Updates all global variables for calculations */ 
   
@@ -290,21 +237,148 @@ void UpdateData(){
     maxHeight = altRefine;
 }
 
-void SerialTest(){
+/*
+   Read a file one field at a time.
+   file - File to read.
+   str - Character array for the field.
+   size - Size of str array.
+   delim - csv delimiter.
+   return - negative value for failure.
+            delimiter, '\n' or zero(EOF) for success.
+*/
+int csvReadText(File* file, char* str, size_t size, char delim) {
+  char ch;
+  int rtn;
+  size_t n = 0;
+  while (true) {
+    // check for EOF
+    if (!file->available()) {
+      rtn = 0;
+      break;
+    }
+    if (file->read(&ch, 1) != 1) {
+      // read error
+      rtn = -1;
+      break;
+    }
+    // Delete CR.
+    if (ch == '\r') {
+      continue;
+    }
+    if (ch == delim || ch == '\n') {
+      rtn = ch;
+      break;
+    }
+    if ((n + 1) >= size) {
+      // string too long
+      rtn = -2;
+      n--;
+      break;
+    }
+    str[n++] = ch;
+  }
+  str[n] = '\0';
+  return rtn;
+}
+//------------------------------------------------------------------------------
+int csvReadInt32(File* file, int32_t* num, char delim) {
+  char buf[20];
+  char* ptr;
+  int rtn = csvReadText(file, buf, sizeof(buf), delim);
+  if (rtn < 0) return rtn;
+  *num = strtol(buf, &ptr, 10);
+  if (buf == ptr) return -3;
+  while (isspace(*ptr)) ptr++;
+  return *ptr == 0 ? rtn : -4;
+}
+//------------------------------------------------------------------------------
+int csvReadInt16(File* file, int16_t* num, char delim) {
+  int32_t tmp;
+  int rtn = csvReadInt32(file, &tmp, delim);
+  if (rtn < 0) return rtn;
+  if (tmp < INT_MIN || tmp > INT_MAX) return -5;
+  *num = tmp;
+  return rtn;
+}
+//------------------------------------------------------------------------------
+int csvReadUint32(File* file, uint32_t* num, char delim) {
+  char buf[20];
+  char* ptr;
+  int rtn = csvReadText(file, buf, sizeof(buf), delim);
+  if (rtn < 0) return rtn;
+  *num = strtoul(buf, &ptr, 10);
+  if (buf == ptr) return -3;
+  while (isspace(*ptr)) ptr++;
+  return *ptr == 0 ? rtn : -4;
+}
+//------------------------------------------------------------------------------
+int csvReadUint16(File* file, uint16_t* num, char delim) {
+  uint32_t tmp;
+  int rtn = csvReadUint32(file, &tmp, delim);
+  if (rtn < 0) return rtn;
+  if (tmp > UINT_MAX) return -5;
+  *num = tmp;
+  return rtn;
+}
+//------------------------------------------------------------------------------
+int csvReadDouble(File* file, double* num, char delim) {
+  char buf[20];
+  char* ptr;
+  int rtn = csvReadText(file, buf, sizeof(buf), delim);
+  if (rtn < 0) return rtn;
+  *num = strtod(buf, &ptr);
+  if (buf == ptr) return -3;
+  while (isspace(*ptr)) ptr++;
+  return *ptr == 0 ? rtn : -4;
+}
+//------------------------------------------------------------------------------
+int csvReadFloat(File* file, float* num, char delim) {
+  double tmp;
+  int rtn = csvReadDouble(file, &tmp, delim);
+  if (rtn < 0)return rtn;
+  // could test for too large.
+  *num = tmp;
+  return rtn;
+}
+//------------------------------------------------------------------------------
+void csvSetup() {
+  // Remove existing file.
+//    SD.remove("READTEST.TXT");
 
- /*For debugging, uncomment desired variables and call within UpdateData()*/
-  /*Serial.print("time: "); */Serial.print(time); Serial.print(" ,");
- // /*Serial.print("rawAlt: "); */Serial.print(altitude); Serial.print(" ,");
-  /*Serial.print("altRef: "); */Serial.print(altRefine); Serial.print(" ,");
- // /*Serial.print("aX: "); */Serial.print(accX); Serial.print(" ,");
-  /*Serial.print("aY: ");*/ Serial.print(accY); Serial.print(" ,");
-  ///*Serial.print("aZ: "); */Serial.print(accZ); Serial.print(" ,");
-  /*Serial.print("accRef: "); */Serial.print(accRefine); Serial.print(" ,");
-  /*Serial.print("vel: "); */ Serial.print(velocity); Serial.print(" ,");
-  Serial.print(getPos()); Serial.print(" ,");
-  /*Serial.print("proHeight: "); */ Serial.print(projHeight); Serial.print(" , ");
-  Serial.print(altCorrect); Serial.print(" , "); Serial.print(maxHeight);
-  Serial.println(""); // prints new line
-  delay(100);         // optional delay of output
- 
+  // Write test data.   (Disabled for my test with real data)
+//    file.print(F(
+//  "36,23.20,20.70,57.60,79.50,01:08:14,23.06.16\r\n"
+//  "37,23.21,20.71,57.61,79.51,02:08:14,23.07.16\r\n"
+//  ));
+
+//  // Must be dim 9 to allow for zero byte.
+
+  while (csv.available()) {
+  if (csvReadUint32(&csv, &time, delim) != delim
+        || csvReadDouble(&csv, &altitude, delim) != delim
+        || csvReadDouble(&csv, &accX, delim) != delim
+        || csvReadDouble(&csv, &accY, delim) != delim
+        || csvReadDouble(&csv, &accZ, delim) != '\n'){
+    //    || csvReadText(&file, dateS, sizeof(dateS), delim) != '\n') {
+      Serial.println("read error");
+      int ch;
+      delay(100);
+      int nr = 0;
+      // print part of file after error.
+      while ((ch = csv.read()) > 0 && nr++ < 100) {
+        delay(10);
+        Serial.write(ch);
+      }
+      break;
+    }
+    Serial.print(time);
+    Serial.print(delim);
+    Serial.print(altitude);
+    Serial.print(delim);
+    Serial.print(accX);
+    Serial.print(delim);
+    Serial.print(accY);
+    Serial.print(delim);
+    Serial.println(accZ);
+  }
 }
